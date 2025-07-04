@@ -5,7 +5,7 @@ Repositório para armazenamento do código desenvolvido durante atividade avalia
 ## Ferramentas Necessarias
 
 - protobuf
-Pode ser obtido em https://github.com/protocolbuffers/protobuf/releases/tag/v31.1 ()
+Pode ser obtido em https://github.com/protocolbuffers/protobuf/releases/tag/v31.1 
 - go 
 Pode ser obtido em https://go.dev/
 - gRPC

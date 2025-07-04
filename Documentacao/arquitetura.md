@@ -64,5 +64,4 @@ Quando um jogador solicita a entrada em um jogo aleatório ele entra na fila de 
 - gRPC
 - RabbitMQ
 - Go
-- Gin (?)
-- Vue (?)
+- Protobuf

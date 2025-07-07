@@ -10,3 +10,9 @@ Pode ser obtido em https://github.com/protocolbuffers/protobuf/releases/tag/v31.
 Pode ser obtido em https://go.dev/
 - gRPC
 Pode ser instalado a partir do tutorial https://grpc.io/docs/languages/go/quickstart/
+
+
+## Para rodar o programa
+- No diretorio raiz (pasta Exercicio4) execute
+    - go run servidor/main.go para rodar o servidor
+    - go run cliente/main.go para rodar o cliente

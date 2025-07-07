@@ -57,9 +57,47 @@ func (s *GameServer) CriarJogo(ctx context.Context, req *pb.CriarJogoRequest) (*
 }
 
 func (s *GameServer) EntrarJogo(ctx context.Context, req *pb.EntrarJogoRequest) (*pb.EntrarJogoResponse, error) {
-	// TODO: lógica para entrar em jogo
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	jogo, existe := s.jogos[req.CodigoJogo]
+	if !existe {
+		return &pb.EntrarJogoResponse{
+			Mensagem: "Código de jogo inválido",
+			Sucesso:  false,
+		}, nil
+	}
+
+	if jogo.Finalizado {
+		return &pb.EntrarJogoResponse{
+			Mensagem: "O jogo já foi finalizado",
+			Sucesso:  false,
+		}, nil
+	}
+
+	// Verifica se jogador já está no jogo
+	for _, j := range jogo.Jogadores {
+		if j == req.JogadorId {
+			return &pb.EntrarJogoResponse{
+				Mensagem: "Você já está participando deste jogo",
+				Sucesso:  true,
+			}, nil
+		}
+	}
+
+	// Limite de jogadores: 4
+	if len(jogo.Jogadores) >= 4 {
+		return &pb.EntrarJogoResponse{
+			Mensagem: "O jogo já possui quatro jogadores",
+			Sucesso:  false,
+		}, nil
+	}
+
+	// Adiciona jogador ao jogo
+	jogo.Jogadores = append(jogo.Jogadores, req.JogadorId)
+
 	return &pb.EntrarJogoResponse{
-		Mensagem: "Entrou no jogo com sucesso",
+		Mensagem: "Jogador adicionado ao jogo com sucesso",
 		Sucesso:  true,
 	}, nil
 }

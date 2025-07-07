@@ -21,27 +21,29 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type HelloRequest struct {
+type CriarJogoRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	JogadorId     string                 `protobuf:"bytes,1,opt,name=jogador_id,json=jogadorId,proto3" json:"jogador_id,omitempty"`
+	ComAmigos     bool                   `protobuf:"varint,2,opt,name=com_amigos,json=comAmigos,proto3" json:"com_amigos,omitempty"`
+	Solo          bool                   `protobuf:"varint,3,opt,name=solo,proto3" json:"solo,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *HelloRequest) Reset() {
-	*x = HelloRequest{}
+func (x *CriarJogoRequest) Reset() {
+	*x = CriarJogoRequest{}
 	mi := &file_proto_forcagame_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *HelloRequest) String() string {
+func (x *CriarJogoRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*HelloRequest) ProtoMessage() {}
+func (*CriarJogoRequest) ProtoMessage() {}
 
-func (x *HelloRequest) ProtoReflect() protoreflect.Message {
+func (x *CriarJogoRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_forcagame_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -53,39 +55,54 @@ func (x *HelloRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use HelloRequest.ProtoReflect.Descriptor instead.
-func (*HelloRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CriarJogoRequest.ProtoReflect.Descriptor instead.
+func (*CriarJogoRequest) Descriptor() ([]byte, []int) {
 	return file_proto_forcagame_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *HelloRequest) GetName() string {
+func (x *CriarJogoRequest) GetJogadorId() string {
 	if x != nil {
-		return x.Name
+		return x.JogadorId
 	}
 	return ""
 }
 
-type HelloReply struct {
+func (x *CriarJogoRequest) GetComAmigos() bool {
+	if x != nil {
+		return x.ComAmigos
+	}
+	return false
+}
+
+func (x *CriarJogoRequest) GetSolo() bool {
+	if x != nil {
+		return x.Solo
+	}
+	return false
+}
+
+type CriarJogoResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	CodigoJogo    string                 `protobuf:"bytes,1,opt,name=codigo_jogo,json=codigoJogo,proto3" json:"codigo_jogo,omitempty"`
+	Mensagem      string                 `protobuf:"bytes,2,opt,name=mensagem,proto3" json:"mensagem,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *HelloReply) Reset() {
-	*x = HelloReply{}
+func (x *CriarJogoResponse) Reset() {
+	*x = CriarJogoResponse{}
 	mi := &file_proto_forcagame_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *HelloReply) String() string {
+func (x *CriarJogoResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*HelloReply) ProtoMessage() {}
+func (*CriarJogoResponse) ProtoMessage() {}
 
-func (x *HelloReply) ProtoReflect() protoreflect.Message {
+func (x *CriarJogoResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_forcagame_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -97,14 +114,433 @@ func (x *HelloReply) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use HelloReply.ProtoReflect.Descriptor instead.
-func (*HelloReply) Descriptor() ([]byte, []int) {
+// Deprecated: Use CriarJogoResponse.ProtoReflect.Descriptor instead.
+func (*CriarJogoResponse) Descriptor() ([]byte, []int) {
 	return file_proto_forcagame_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *HelloReply) GetMessage() string {
+func (x *CriarJogoResponse) GetCodigoJogo() string {
 	if x != nil {
-		return x.Message
+		return x.CodigoJogo
+	}
+	return ""
+}
+
+func (x *CriarJogoResponse) GetMensagem() string {
+	if x != nil {
+		return x.Mensagem
+	}
+	return ""
+}
+
+type EntrarJogoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	JogadorId     string                 `protobuf:"bytes,1,opt,name=jogador_id,json=jogadorId,proto3" json:"jogador_id,omitempty"`
+	CodigoJogo    string                 `protobuf:"bytes,2,opt,name=codigo_jogo,json=codigoJogo,proto3" json:"codigo_jogo,omitempty"` // vazio se for jogo aleatório
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EntrarJogoRequest) Reset() {
+	*x = EntrarJogoRequest{}
+	mi := &file_proto_forcagame_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EntrarJogoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntrarJogoRequest) ProtoMessage() {}
+
+func (x *EntrarJogoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_forcagame_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EntrarJogoRequest.ProtoReflect.Descriptor instead.
+func (*EntrarJogoRequest) Descriptor() ([]byte, []int) {
+	return file_proto_forcagame_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *EntrarJogoRequest) GetJogadorId() string {
+	if x != nil {
+		return x.JogadorId
+	}
+	return ""
+}
+
+func (x *EntrarJogoRequest) GetCodigoJogo() string {
+	if x != nil {
+		return x.CodigoJogo
+	}
+	return ""
+}
+
+type EntrarJogoResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Mensagem      string                 `protobuf:"bytes,1,opt,name=mensagem,proto3" json:"mensagem,omitempty"`
+	Sucesso       bool                   `protobuf:"varint,2,opt,name=sucesso,proto3" json:"sucesso,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EntrarJogoResponse) Reset() {
+	*x = EntrarJogoResponse{}
+	mi := &file_proto_forcagame_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EntrarJogoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntrarJogoResponse) ProtoMessage() {}
+
+func (x *EntrarJogoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_forcagame_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EntrarJogoResponse.ProtoReflect.Descriptor instead.
+func (*EntrarJogoResponse) Descriptor() ([]byte, []int) {
+	return file_proto_forcagame_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *EntrarJogoResponse) GetMensagem() string {
+	if x != nil {
+		return x.Mensagem
+	}
+	return ""
+}
+
+func (x *EntrarJogoResponse) GetSucesso() bool {
+	if x != nil {
+		return x.Sucesso
+	}
+	return false
+}
+
+type PalpitarLetraRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	JogadorId     string                 `protobuf:"bytes,1,opt,name=jogador_id,json=jogadorId,proto3" json:"jogador_id,omitempty"`
+	CodigoJogo    string                 `protobuf:"bytes,2,opt,name=codigo_jogo,json=codigoJogo,proto3" json:"codigo_jogo,omitempty"`
+	Letra         string                 `protobuf:"bytes,3,opt,name=letra,proto3" json:"letra,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PalpitarLetraRequest) Reset() {
+	*x = PalpitarLetraRequest{}
+	mi := &file_proto_forcagame_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PalpitarLetraRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PalpitarLetraRequest) ProtoMessage() {}
+
+func (x *PalpitarLetraRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_forcagame_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PalpitarLetraRequest.ProtoReflect.Descriptor instead.
+func (*PalpitarLetraRequest) Descriptor() ([]byte, []int) {
+	return file_proto_forcagame_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PalpitarLetraRequest) GetJogadorId() string {
+	if x != nil {
+		return x.JogadorId
+	}
+	return ""
+}
+
+func (x *PalpitarLetraRequest) GetCodigoJogo() string {
+	if x != nil {
+		return x.CodigoJogo
+	}
+	return ""
+}
+
+func (x *PalpitarLetraRequest) GetLetra() string {
+	if x != nil {
+		return x.Letra
+	}
+	return ""
+}
+
+type PalpitarPalavraRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	JogadorId     string                 `protobuf:"bytes,1,opt,name=jogador_id,json=jogadorId,proto3" json:"jogador_id,omitempty"`
+	CodigoJogo    string                 `protobuf:"bytes,2,opt,name=codigo_jogo,json=codigoJogo,proto3" json:"codigo_jogo,omitempty"`
+	Palavra       string                 `protobuf:"bytes,3,opt,name=palavra,proto3" json:"palavra,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PalpitarPalavraRequest) Reset() {
+	*x = PalpitarPalavraRequest{}
+	mi := &file_proto_forcagame_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PalpitarPalavraRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PalpitarPalavraRequest) ProtoMessage() {}
+
+func (x *PalpitarPalavraRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_forcagame_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PalpitarPalavraRequest.ProtoReflect.Descriptor instead.
+func (*PalpitarPalavraRequest) Descriptor() ([]byte, []int) {
+	return file_proto_forcagame_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PalpitarPalavraRequest) GetJogadorId() string {
+	if x != nil {
+		return x.JogadorId
+	}
+	return ""
+}
+
+func (x *PalpitarPalavraRequest) GetCodigoJogo() string {
+	if x != nil {
+		return x.CodigoJogo
+	}
+	return ""
+}
+
+func (x *PalpitarPalavraRequest) GetPalavra() string {
+	if x != nil {
+		return x.Palavra
+	}
+	return ""
+}
+
+type DicaRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	JogadorId     string                 `protobuf:"bytes,1,opt,name=jogador_id,json=jogadorId,proto3" json:"jogador_id,omitempty"`
+	CodigoJogo    string                 `protobuf:"bytes,2,opt,name=codigo_jogo,json=codigoJogo,proto3" json:"codigo_jogo,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DicaRequest) Reset() {
+	*x = DicaRequest{}
+	mi := &file_proto_forcagame_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DicaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DicaRequest) ProtoMessage() {}
+
+func (x *DicaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_forcagame_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DicaRequest.ProtoReflect.Descriptor instead.
+func (*DicaRequest) Descriptor() ([]byte, []int) {
+	return file_proto_forcagame_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *DicaRequest) GetJogadorId() string {
+	if x != nil {
+		return x.JogadorId
+	}
+	return ""
+}
+
+func (x *DicaRequest) GetCodigoJogo() string {
+	if x != nil {
+		return x.CodigoJogo
+	}
+	return ""
+}
+
+type EstadoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CodigoJogo    string                 `protobuf:"bytes,1,opt,name=codigo_jogo,json=codigoJogo,proto3" json:"codigo_jogo,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EstadoRequest) Reset() {
+	*x = EstadoRequest{}
+	mi := &file_proto_forcagame_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EstadoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EstadoRequest) ProtoMessage() {}
+
+func (x *EstadoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_forcagame_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EstadoRequest.ProtoReflect.Descriptor instead.
+func (*EstadoRequest) Descriptor() ([]byte, []int) {
+	return file_proto_forcagame_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *EstadoRequest) GetCodigoJogo() string {
+	if x != nil {
+		return x.CodigoJogo
+	}
+	return ""
+}
+
+type AtualizacaoResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	PalavraVisivel string                 `protobuf:"bytes,1,opt,name=palavra_visivel,json=palavraVisivel,proto3" json:"palavra_visivel,omitempty"`
+	LetrasErradas  []string               `protobuf:"bytes,2,rep,name=letras_erradas,json=letrasErradas,proto3" json:"letras_erradas,omitempty"`
+	ErrosJogador   int32                  `protobuf:"varint,3,opt,name=erros_jogador,json=errosJogador,proto3" json:"erros_jogador,omitempty"`
+	JogadorDaVez   string                 `protobuf:"bytes,4,opt,name=jogador_da_vez,json=jogadorDaVez,proto3" json:"jogador_da_vez,omitempty"`
+	Mensagem       string                 `protobuf:"bytes,5,opt,name=mensagem,proto3" json:"mensagem,omitempty"`
+	JogoEncerrado  bool                   `protobuf:"varint,6,opt,name=jogo_encerrado,json=jogoEncerrado,proto3" json:"jogo_encerrado,omitempty"`
+	VencedorId     string                 `protobuf:"bytes,7,opt,name=vencedor_id,json=vencedorId,proto3" json:"vencedor_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AtualizacaoResponse) Reset() {
+	*x = AtualizacaoResponse{}
+	mi := &file_proto_forcagame_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AtualizacaoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AtualizacaoResponse) ProtoMessage() {}
+
+func (x *AtualizacaoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_forcagame_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AtualizacaoResponse.ProtoReflect.Descriptor instead.
+func (*AtualizacaoResponse) Descriptor() ([]byte, []int) {
+	return file_proto_forcagame_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *AtualizacaoResponse) GetPalavraVisivel() string {
+	if x != nil {
+		return x.PalavraVisivel
+	}
+	return ""
+}
+
+func (x *AtualizacaoResponse) GetLetrasErradas() []string {
+	if x != nil {
+		return x.LetrasErradas
+	}
+	return nil
+}
+
+func (x *AtualizacaoResponse) GetErrosJogador() int32 {
+	if x != nil {
+		return x.ErrosJogador
+	}
+	return 0
+}
+
+func (x *AtualizacaoResponse) GetJogadorDaVez() string {
+	if x != nil {
+		return x.JogadorDaVez
+	}
+	return ""
+}
+
+func (x *AtualizacaoResponse) GetMensagem() string {
+	if x != nil {
+		return x.Mensagem
+	}
+	return ""
+}
+
+func (x *AtualizacaoResponse) GetJogoEncerrado() bool {
+	if x != nil {
+		return x.JogoEncerrado
+	}
+	return false
+}
+
+func (x *AtualizacaoResponse) GetVencedorId() string {
+	if x != nil {
+		return x.VencedorId
 	}
 	return ""
 }
@@ -113,14 +549,62 @@ var File_proto_forcagame_proto protoreflect.FileDescriptor
 
 const file_proto_forcagame_proto_rawDesc = "" +
 	"\n" +
-	"\x15proto/forcagame.proto\x12\tForcaGame\"\"\n" +
-	"\fHelloRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"&\n" +
+	"\x15proto/forcagame.proto\x12\tForcaGame\"d\n" +
+	"\x10CriarJogoRequest\x12\x1d\n" +
 	"\n" +
-	"HelloReply\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage2E\n" +
-	"\aGreeter\x12:\n" +
-	"\bSayHello\x12\x17.ForcaGame.HelloRequest\x1a\x15.ForcaGame.HelloReplyB\x14Z\x12ForcaGame/proto;pbb\x06proto3"
+	"jogador_id\x18\x01 \x01(\tR\tjogadorId\x12\x1d\n" +
+	"\n" +
+	"com_amigos\x18\x02 \x01(\bR\tcomAmigos\x12\x12\n" +
+	"\x04solo\x18\x03 \x01(\bR\x04solo\"P\n" +
+	"\x11CriarJogoResponse\x12\x1f\n" +
+	"\vcodigo_jogo\x18\x01 \x01(\tR\n" +
+	"codigoJogo\x12\x1a\n" +
+	"\bmensagem\x18\x02 \x01(\tR\bmensagem\"S\n" +
+	"\x11EntrarJogoRequest\x12\x1d\n" +
+	"\n" +
+	"jogador_id\x18\x01 \x01(\tR\tjogadorId\x12\x1f\n" +
+	"\vcodigo_jogo\x18\x02 \x01(\tR\n" +
+	"codigoJogo\"J\n" +
+	"\x12EntrarJogoResponse\x12\x1a\n" +
+	"\bmensagem\x18\x01 \x01(\tR\bmensagem\x12\x18\n" +
+	"\asucesso\x18\x02 \x01(\bR\asucesso\"l\n" +
+	"\x14PalpitarLetraRequest\x12\x1d\n" +
+	"\n" +
+	"jogador_id\x18\x01 \x01(\tR\tjogadorId\x12\x1f\n" +
+	"\vcodigo_jogo\x18\x02 \x01(\tR\n" +
+	"codigoJogo\x12\x14\n" +
+	"\x05letra\x18\x03 \x01(\tR\x05letra\"r\n" +
+	"\x16PalpitarPalavraRequest\x12\x1d\n" +
+	"\n" +
+	"jogador_id\x18\x01 \x01(\tR\tjogadorId\x12\x1f\n" +
+	"\vcodigo_jogo\x18\x02 \x01(\tR\n" +
+	"codigoJogo\x12\x18\n" +
+	"\apalavra\x18\x03 \x01(\tR\apalavra\"M\n" +
+	"\vDicaRequest\x12\x1d\n" +
+	"\n" +
+	"jogador_id\x18\x01 \x01(\tR\tjogadorId\x12\x1f\n" +
+	"\vcodigo_jogo\x18\x02 \x01(\tR\n" +
+	"codigoJogo\"0\n" +
+	"\rEstadoRequest\x12\x1f\n" +
+	"\vcodigo_jogo\x18\x01 \x01(\tR\n" +
+	"codigoJogo\"\x94\x02\n" +
+	"\x13AtualizacaoResponse\x12'\n" +
+	"\x0fpalavra_visivel\x18\x01 \x01(\tR\x0epalavraVisivel\x12%\n" +
+	"\x0eletras_erradas\x18\x02 \x03(\tR\rletrasErradas\x12#\n" +
+	"\rerros_jogador\x18\x03 \x01(\x05R\ferrosJogador\x12$\n" +
+	"\x0ejogador_da_vez\x18\x04 \x01(\tR\fjogadorDaVez\x12\x1a\n" +
+	"\bmensagem\x18\x05 \x01(\tR\bmensagem\x12%\n" +
+	"\x0ejogo_encerrado\x18\x06 \x01(\bR\rjogoEncerrado\x12\x1f\n" +
+	"\vvencedor_id\x18\a \x01(\tR\n" +
+	"vencedorId2\xd6\x03\n" +
+	"\vGameService\x12F\n" +
+	"\tCriarJogo\x12\x1b.ForcaGame.CriarJogoRequest\x1a\x1c.ForcaGame.CriarJogoResponse\x12I\n" +
+	"\n" +
+	"EntrarJogo\x12\x1c.ForcaGame.EntrarJogoRequest\x1a\x1d.ForcaGame.EntrarJogoResponse\x12P\n" +
+	"\rPalpitarLetra\x12\x1f.ForcaGame.PalpitarLetraRequest\x1a\x1e.ForcaGame.AtualizacaoResponse\x12T\n" +
+	"\x0fPalpitarPalavra\x12!.ForcaGame.PalpitarPalavraRequest\x1a\x1e.ForcaGame.AtualizacaoResponse\x12C\n" +
+	"\tPedirDica\x12\x16.ForcaGame.DicaRequest\x1a\x1e.ForcaGame.AtualizacaoResponse\x12G\n" +
+	"\vObterEstado\x12\x18.ForcaGame.EstadoRequest\x1a\x1e.ForcaGame.AtualizacaoResponseB\x14Z\x12ForcaGame/proto;pbb\x06proto3"
 
 var (
 	file_proto_forcagame_proto_rawDescOnce sync.Once
@@ -134,16 +618,33 @@ func file_proto_forcagame_proto_rawDescGZIP() []byte {
 	return file_proto_forcagame_proto_rawDescData
 }
 
-var file_proto_forcagame_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_proto_forcagame_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_proto_forcagame_proto_goTypes = []any{
-	(*HelloRequest)(nil), // 0: ForcaGame.HelloRequest
-	(*HelloReply)(nil),   // 1: ForcaGame.HelloReply
+	(*CriarJogoRequest)(nil),       // 0: ForcaGame.CriarJogoRequest
+	(*CriarJogoResponse)(nil),      // 1: ForcaGame.CriarJogoResponse
+	(*EntrarJogoRequest)(nil),      // 2: ForcaGame.EntrarJogoRequest
+	(*EntrarJogoResponse)(nil),     // 3: ForcaGame.EntrarJogoResponse
+	(*PalpitarLetraRequest)(nil),   // 4: ForcaGame.PalpitarLetraRequest
+	(*PalpitarPalavraRequest)(nil), // 5: ForcaGame.PalpitarPalavraRequest
+	(*DicaRequest)(nil),            // 6: ForcaGame.DicaRequest
+	(*EstadoRequest)(nil),          // 7: ForcaGame.EstadoRequest
+	(*AtualizacaoResponse)(nil),    // 8: ForcaGame.AtualizacaoResponse
 }
 var file_proto_forcagame_proto_depIdxs = []int32{
-	0, // 0: ForcaGame.Greeter.SayHello:input_type -> ForcaGame.HelloRequest
-	1, // 1: ForcaGame.Greeter.SayHello:output_type -> ForcaGame.HelloReply
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	0, // 0: ForcaGame.GameService.CriarJogo:input_type -> ForcaGame.CriarJogoRequest
+	2, // 1: ForcaGame.GameService.EntrarJogo:input_type -> ForcaGame.EntrarJogoRequest
+	4, // 2: ForcaGame.GameService.PalpitarLetra:input_type -> ForcaGame.PalpitarLetraRequest
+	5, // 3: ForcaGame.GameService.PalpitarPalavra:input_type -> ForcaGame.PalpitarPalavraRequest
+	6, // 4: ForcaGame.GameService.PedirDica:input_type -> ForcaGame.DicaRequest
+	7, // 5: ForcaGame.GameService.ObterEstado:input_type -> ForcaGame.EstadoRequest
+	1, // 6: ForcaGame.GameService.CriarJogo:output_type -> ForcaGame.CriarJogoResponse
+	3, // 7: ForcaGame.GameService.EntrarJogo:output_type -> ForcaGame.EntrarJogoResponse
+	8, // 8: ForcaGame.GameService.PalpitarLetra:output_type -> ForcaGame.AtualizacaoResponse
+	8, // 9: ForcaGame.GameService.PalpitarPalavra:output_type -> ForcaGame.AtualizacaoResponse
+	8, // 10: ForcaGame.GameService.PedirDica:output_type -> ForcaGame.AtualizacaoResponse
+	8, // 11: ForcaGame.GameService.ObterEstado:output_type -> ForcaGame.AtualizacaoResponse
+	6, // [6:12] is the sub-list for method output_type
+	0, // [0:6] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -160,7 +661,7 @@ func file_proto_forcagame_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_forcagame_proto_rawDesc), len(file_proto_forcagame_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -4,14 +4,68 @@ package ForcaGame;
 
 option go_package = "ForcaGame/proto;pb";
 
-service Greeter {
-  rpc SayHello (HelloRequest) returns (HelloReply);
+service GameService {
+  // Criação de jogos
+  rpc CriarJogo (CriarJogoRequest) returns (CriarJogoResponse);
+  rpc EntrarJogo (EntrarJogoRequest) returns (EntrarJogoResponse);
+
+  // Ações no jogo
+  rpc PalpitarLetra (PalpitarLetraRequest) returns (AtualizacaoResponse);
+  rpc PalpitarPalavra (PalpitarPalavraRequest) returns (AtualizacaoResponse);
+  rpc PedirDica (DicaRequest) returns (AtualizacaoResponse);
+
+  // Consulta de estado (opcional)
+  rpc ObterEstado (EstadoRequest) returns (AtualizacaoResponse);
 }
 
-message HelloRequest {
-  string name = 1;
+message CriarJogoRequest {
+  string jogador_id = 1;
+  bool com_amigos = 2;
+  bool solo = 3;
 }
 
-message HelloReply {
-  string message = 1;
+message CriarJogoResponse {
+  string codigo_jogo = 1;
+  string mensagem = 2;
+}
+
+message EntrarJogoRequest {
+  string jogador_id = 1;
+  string codigo_jogo = 2; // vazio se for jogo aleatório
+}
+
+message EntrarJogoResponse {
+  string mensagem = 1;
+  bool sucesso = 2;
+}
+
+message PalpitarLetraRequest {
+  string jogador_id = 1;
+  string codigo_jogo = 2;
+  string letra = 3;
+}
+
+message PalpitarPalavraRequest {
+  string jogador_id = 1;
+  string codigo_jogo = 2;
+  string palavra = 3;
+}
+
+message DicaRequest {
+  string jogador_id = 1;
+  string codigo_jogo = 2;
+}
+
+message EstadoRequest {
+  string codigo_jogo = 1;
+}
+
+message AtualizacaoResponse {
+  string palavra_visivel = 1;
+  repeated string letras_erradas = 2;
+  int32 erros_jogador = 3;
+  string jogador_da_vez = 4;
+  string mensagem = 5;
+  bool jogo_encerrado = 6;
+  string vencedor_id = 7;
 }

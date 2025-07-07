@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 
-	pb "meu-grpc-projeto/jogodaforca"
+	pb "jogodaforca/jogodaforca"
 
 	"google.golang.org/grpc"
 )

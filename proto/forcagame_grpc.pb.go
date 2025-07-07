@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.31.1
-// source: jogodaforca/jogodaforca.proto
+// source: proto/forcagame.proto
 
-package jogodaforca
+package pb
 
 import (
 	context "context"
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Greeter_SayHello_FullMethodName = "/jogodaforca.Greeter/SayHello"
+	Greeter_SayHello_FullMethodName = "/ForcaGame.Greeter/SayHello"
 )
 
 // GreeterClient is the client API for Greeter service.
@@ -108,7 +108,7 @@ func _Greeter_SayHello_Handler(srv interface{}, ctx context.Context, dec func(in
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Greeter_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "jogodaforca.Greeter",
+	ServiceName: "ForcaGame.Greeter",
 	HandlerType: (*GreeterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -117,5 +117,5 @@ var Greeter_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "jogodaforca/jogodaforca.proto",
+	Metadata: "proto/forcagame.proto",
 }

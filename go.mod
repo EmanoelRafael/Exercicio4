@@ -1,4 +1,4 @@
-module jogodaforca
+module ForcaGame
 
 go 1.24.3
 

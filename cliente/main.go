@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	pb "jogodaforca/jogodaforca"
+	pb "ForcaGame/proto"
 
 	"google.golang.org/grpc"
 )

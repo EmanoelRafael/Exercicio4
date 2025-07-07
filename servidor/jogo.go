@@ -5,5 +5,11 @@ type Jogo struct {
 	Palavra        string
 	PalavraVisivel []rune
 	Jogadores      []string
+	Erros          map[string]int
+	DicasUsadas    map[string]bool
+	LetrasErradas  map[string]bool
+	JogadorDaVez   string
+	VencedorID     string
 	Finalizado     bool
+	Eliminados     map[string]bool
 }

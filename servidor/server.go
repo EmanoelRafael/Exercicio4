@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"sync"
 
 	pb "ForcaGame/proto"
@@ -103,23 +105,152 @@ func (s *GameServer) EntrarJogo(ctx context.Context, req *pb.EntrarJogoRequest) 
 }
 
 func (s *GameServer) PalpitarLetra(ctx context.Context, req *pb.PalpitarLetraRequest) (*pb.AtualizacaoResponse, error) {
-	// TODO: lógica para palpite de letra
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	jogo, existe := s.jogos[req.CodigoJogo]
+	if !existe || jogo.Finalizado {
+		return &pb.AtualizacaoResponse{Mensagem: "Jogo não encontrado ou já finalizado"}, nil
+	}
+
+	if jogo.JogadorDaVez != req.JogadorId {
+		return &pb.AtualizacaoResponse{Mensagem: "Não é sua vez"}, nil
+	}
+
+	letra := []rune(req.Letra)
+	if len(letra) != 1 {
+		return &pb.AtualizacaoResponse{Mensagem: "Letra inválida"}, nil
+	}
+
+	acertou := false
+	for i, l := range jogo.Palavra {
+		if l == letra[0] {
+			jogo.PalavraVisivel[i] = l
+			acertou = true
+		}
+	}
+
+	if !acertou {
+		jogo.Erros[req.JogadorId]++
+		jogo.LetrasErradas[strings.ToUpper(req.Letra)] = true
+
+		if jogo.Erros[req.JogadorId] >= 6 {
+			jogo.Eliminados[req.JogadorId] = true
+
+			// Verifica se restou só um jogador
+			restantes := jogadoresRestantes(jogo)
+			if len(restantes) == 1 {
+				jogo.Finalizado = true
+				jogo.VencedorID = restantes[0]
+				return &pb.AtualizacaoResponse{
+					Mensagem:       fmt.Sprintf("Jogador %s perdeu. Último jogador restante venceu!", req.JogadorId),
+					PalavraVisivel: string(jogo.PalavraVisivel),
+					JogoEncerrado:  true,
+					VencedorId:     restantes[0],
+				}, nil
+			}
+		}
+	} else if palavraCompleta(jogo.PalavraVisivel) {
+		jogo.Finalizado = true
+		jogo.VencedorID = req.JogadorId
+		return &pb.AtualizacaoResponse{
+			Mensagem:       "Parabéns! Você completou a palavra e venceu!",
+			PalavraVisivel: string(jogo.PalavraVisivel),
+			JogoEncerrado:  true,
+			VencedorId:     req.JogadorId,
+		}, nil
+	}
+
+	trocarTurno(jogo)
 	return &pb.AtualizacaoResponse{
-		Mensagem: "Letra processada",
+		Mensagem:       "Letra processada",
+		PalavraVisivel: string(jogo.PalavraVisivel),
+		ErrosJogador:   int32(jogo.Erros[req.JogadorId]),
+		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
+		JogadorDaVez:   jogo.JogadorDaVez,
 	}, nil
 }
 
 func (s *GameServer) PalpitarPalavra(ctx context.Context, req *pb.PalpitarPalavraRequest) (*pb.AtualizacaoResponse, error) {
-	// TODO: lógica para palpite da palavra
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	jogo, existe := s.jogos[req.CodigoJogo]
+	if !existe || jogo.Finalizado {
+		return &pb.AtualizacaoResponse{Mensagem: "Jogo não encontrado ou finalizado"}, nil
+	}
+
+	if jogo.JogadorDaVez != req.JogadorId {
+		return &pb.AtualizacaoResponse{Mensagem: "Não é sua vez"}, nil
+	}
+
+	if strings.EqualFold(req.Palavra, jogo.Palavra) {
+		jogo.PalavraVisivel = []rune(jogo.Palavra)
+		jogo.Finalizado = true
+		jogo.VencedorID = req.JogadorId
+		return &pb.AtualizacaoResponse{
+			Mensagem:       "Você acertou a palavra! Vitória!",
+			PalavraVisivel: string(jogo.PalavraVisivel),
+			JogoEncerrado:  true,
+			VencedorId:     req.JogadorId,
+		}, nil
+	}
+
+	// Errou a palavra
+	jogo.Erros[req.JogadorId]++
+	if jogo.Erros[req.JogadorId] >= 6 {
+		jogo.Eliminados[req.JogadorId] = true
+		restantes := jogadoresRestantes(jogo)
+		if len(restantes) == 1 {
+			jogo.Finalizado = true
+			jogo.VencedorID = restantes[0]
+			return &pb.AtualizacaoResponse{
+				Mensagem:       fmt.Sprintf("Jogador %s perdeu. Último jogador restante venceu!", req.JogadorId),
+				PalavraVisivel: string(jogo.PalavraVisivel),
+				JogoEncerrado:  true,
+				VencedorId:     restantes[0],
+			}, nil
+		}
+	}
+
+	trocarTurno(jogo)
 	return &pb.AtualizacaoResponse{
-		Mensagem: "Palavra processada",
+		Mensagem:       "Palpite errado. Próximo jogador.",
+		PalavraVisivel: string(jogo.PalavraVisivel),
+		ErrosJogador:   int32(jogo.Erros[req.JogadorId]),
+		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
+		JogadorDaVez:   jogo.JogadorDaVez,
 	}, nil
 }
 
 func (s *GameServer) PedirDica(ctx context.Context, req *pb.DicaRequest) (*pb.AtualizacaoResponse, error) {
-	// TODO: lógica para dica
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	jogo, existe := s.jogos[req.CodigoJogo]
+	if !existe || jogo.Finalizado {
+		return &pb.AtualizacaoResponse{Mensagem: "Jogo inválido ou finalizado"}, nil
+	}
+
+	if jogo.DicasUsadas[req.JogadorId] {
+		return &pb.AtualizacaoResponse{Mensagem: "Você já usou sua dica"}, nil
+	}
+
+	// Revela uma letra oculta
+	for i, r := range jogo.Palavra {
+		if jogo.PalavraVisivel[i] == '_' {
+			jogo.PalavraVisivel[i] = r
+			jogo.DicasUsadas[req.JogadorId] = true
+			break
+		}
+	}
+
 	return &pb.AtualizacaoResponse{
-		Mensagem: "Dica enviada",
+		Mensagem:       "Dica revelada. Você joga novamente.",
+		PalavraVisivel: string(jogo.PalavraVisivel),
+		ErrosJogador:   int32(jogo.Erros[req.JogadorId]),
+		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
+		JogadorDaVez:   req.JogadorId,
 	}, nil
 }
 

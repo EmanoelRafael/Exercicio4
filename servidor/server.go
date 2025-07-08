@@ -36,11 +36,19 @@ func (s *GameServer) CriarJogo(ctx context.Context, req *pb.CriarJogoRequest) (*
 	codigo := GerarCodigoJogo()
 
 	jogo := &Jogo{
-		Codigo:         codigo,
-		Palavra:        palavra,
-		PalavraVisivel: visivel,
-		Jogadores:      []string{req.JogadorId},
-		Finalizado:     false,
+		Codigo:         codigo,                  // string gerada por GerarCodigoJogo()
+		Palavra:        palavra,                 // string da palavra escolhida
+		PalavraVisivel: visivel,                 // slice de '_' com o mesmo tamanho da palavra
+		Jogadores:      []string{req.JogadorId}, // jogador que criou o jogo
+		JogadorDaVez:   req.JogadorId,           // começa com quem criou
+
+		Erros:         map[string]int{req.JogadorId: 0},
+		DicasUsadas:   map[string]bool{req.JogadorId: false},
+		LetrasErradas: make(map[string]bool), // compartilhado entre todos os jogadores
+		Eliminados:    make(map[string]bool), // ninguém eliminado no início
+
+		Finalizado: false,
+		VencedorID: "",
 	}
 
 	s.jogos[codigo] = jogo
@@ -97,6 +105,8 @@ func (s *GameServer) EntrarJogo(ctx context.Context, req *pb.EntrarJogoRequest) 
 
 	// Adiciona jogador ao jogo
 	jogo.Jogadores = append(jogo.Jogadores, req.JogadorId)
+	jogo.Erros[req.JogadorId] = 0
+	jogo.DicasUsadas[req.JogadorId] = false
 
 	return &pb.EntrarJogoResponse{
 		Mensagem: "Jogador adicionado ao jogo com sucesso",
@@ -161,7 +171,9 @@ func (s *GameServer) PalpitarLetra(ctx context.Context, req *pb.PalpitarLetraReq
 		}, nil
 	}
 
+	fmt.Println("O jogador da vez antes era: ", jogo.JogadorDaVez)
 	trocarTurno(jogo)
+	fmt.Println("O jogador da vez agora eh: ", jogo.JogadorDaVez)
 	return &pb.AtualizacaoResponse{
 		Mensagem:       "Letra processada",
 		PalavraVisivel: string(jogo.PalavraVisivel),

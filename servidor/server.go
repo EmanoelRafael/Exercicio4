@@ -158,6 +158,16 @@ func (s *GameServer) PalpitarLetra(ctx context.Context, req *pb.PalpitarLetraReq
 					JogoEncerrado:  true,
 					VencedorId:     restantes[0],
 				}, nil
+			} else if len(restantes) == 0 {
+				jogo.Finalizado = true
+				jogo.VencedorID = "nil"
+				fmt.Println("Palpitar letra - Jogador perdeu")
+				return &pb.AtualizacaoResponse{
+					Mensagem:       fmt.Sprintf("Jogador %s perdeu. Jogo encerrado!", req.JogadorId),
+					PalavraVisivel: string(jogo.PalavraVisivel),
+					JogoEncerrado:  true,
+					VencedorId:     "nil",
+				}, nil
 			}
 		}
 	} else if palavraCompleta(jogo.PalavraVisivel) {

@@ -255,8 +255,28 @@ func (s *GameServer) PedirDica(ctx context.Context, req *pb.DicaRequest) (*pb.At
 }
 
 func (s *GameServer) ObterEstado(ctx context.Context, req *pb.EstadoRequest) (*pb.AtualizacaoResponse, error) {
-	// TODO: lógica para retornar estado atual
-	return &pb.AtualizacaoResponse{
-		Mensagem: "Estado atual do jogo",
-	}, nil
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	jogo, ok := s.jogos[req.CodigoJogo]
+	if !ok {
+		return &pb.AtualizacaoResponse{
+			Mensagem: "Jogo não encontrado",
+		}, nil
+	}
+
+	// Converte o slice de runes para string
+	palavraVisivel := string(jogo.PalavraVisivel)
+
+	resp := &pb.AtualizacaoResponse{
+		PalavraVisivel: palavraVisivel,
+		Mensagem:       "Estado atual do jogo",
+		JogadorDaVez:   jogo.JogadorDaVez,
+		JogoEncerrado:  jogo.Finalizado,
+		VencedorId:     jogo.VencedorID,
+		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
+		ErrosJogador:   int32(jogo.Erros[req.JogadorId]),
+	}
+
+	return resp, nil
 }

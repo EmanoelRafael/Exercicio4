@@ -58,6 +58,7 @@ message DicaRequest {
 
 message EstadoRequest {
   string codigo_jogo = 1;
+  string jogador_id = 2;
 }
 
 message AtualizacaoResponse {

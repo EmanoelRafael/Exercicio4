@@ -412,6 +412,7 @@ func (x *DicaRequest) GetCodigoJogo() string {
 type EstadoRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CodigoJogo    string                 `protobuf:"bytes,1,opt,name=codigo_jogo,json=codigoJogo,proto3" json:"codigo_jogo,omitempty"`
+	JogadorId     string                 `protobuf:"bytes,2,opt,name=jogador_id,json=jogadorId,proto3" json:"jogador_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -449,6 +450,13 @@ func (*EstadoRequest) Descriptor() ([]byte, []int) {
 func (x *EstadoRequest) GetCodigoJogo() string {
 	if x != nil {
 		return x.CodigoJogo
+	}
+	return ""
+}
+
+func (x *EstadoRequest) GetJogadorId() string {
+	if x != nil {
+		return x.JogadorId
 	}
 	return ""
 }
@@ -584,10 +592,12 @@ const file_proto_forcagame_proto_rawDesc = "" +
 	"\n" +
 	"jogador_id\x18\x01 \x01(\tR\tjogadorId\x12\x1f\n" +
 	"\vcodigo_jogo\x18\x02 \x01(\tR\n" +
-	"codigoJogo\"0\n" +
+	"codigoJogo\"O\n" +
 	"\rEstadoRequest\x12\x1f\n" +
 	"\vcodigo_jogo\x18\x01 \x01(\tR\n" +
-	"codigoJogo\"\x94\x02\n" +
+	"codigoJogo\x12\x1d\n" +
+	"\n" +
+	"jogador_id\x18\x02 \x01(\tR\tjogadorId\"\x94\x02\n" +
 	"\x13AtualizacaoResponse\x12'\n" +
 	"\x0fpalavra_visivel\x18\x01 \x01(\tR\x0epalavraVisivel\x12%\n" +
 	"\x0eletras_erradas\x18\x02 \x03(\tR\rletrasErradas\x12#\n" +

@@ -67,6 +67,6 @@ message AtualizacaoResponse {
   int32 erros_jogador = 3;
   string jogador_da_vez = 4;
   string mensagem = 5;
-  bool jogo_encerrado = 6;
+  int32 jogo_status = 6;
   string vencedor_id = 7;
 }

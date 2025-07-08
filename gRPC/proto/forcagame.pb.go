@@ -468,7 +468,7 @@ type AtualizacaoResponse struct {
 	ErrosJogador   int32                  `protobuf:"varint,3,opt,name=erros_jogador,json=errosJogador,proto3" json:"erros_jogador,omitempty"`
 	JogadorDaVez   string                 `protobuf:"bytes,4,opt,name=jogador_da_vez,json=jogadorDaVez,proto3" json:"jogador_da_vez,omitempty"`
 	Mensagem       string                 `protobuf:"bytes,5,opt,name=mensagem,proto3" json:"mensagem,omitempty"`
-	JogoEncerrado  bool                   `protobuf:"varint,6,opt,name=jogo_encerrado,json=jogoEncerrado,proto3" json:"jogo_encerrado,omitempty"`
+	JogoStatus     int32                  `protobuf:"varint,6,opt,name=jogo_status,json=jogoStatus,proto3" json:"jogo_status,omitempty"`
 	VencedorId     string                 `protobuf:"bytes,7,opt,name=vencedor_id,json=vencedorId,proto3" json:"vencedor_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -539,11 +539,11 @@ func (x *AtualizacaoResponse) GetMensagem() string {
 	return ""
 }
 
-func (x *AtualizacaoResponse) GetJogoEncerrado() bool {
+func (x *AtualizacaoResponse) GetJogoStatus() int32 {
 	if x != nil {
-		return x.JogoEncerrado
+		return x.JogoStatus
 	}
-	return false
+	return 0
 }
 
 func (x *AtualizacaoResponse) GetVencedorId() string {
@@ -597,14 +597,15 @@ const file_proto_forcagame_proto_rawDesc = "" +
 	"\vcodigo_jogo\x18\x01 \x01(\tR\n" +
 	"codigoJogo\x12\x1d\n" +
 	"\n" +
-	"jogador_id\x18\x02 \x01(\tR\tjogadorId\"\x94\x02\n" +
+	"jogador_id\x18\x02 \x01(\tR\tjogadorId\"\x8e\x02\n" +
 	"\x13AtualizacaoResponse\x12'\n" +
 	"\x0fpalavra_visivel\x18\x01 \x01(\tR\x0epalavraVisivel\x12%\n" +
 	"\x0eletras_erradas\x18\x02 \x03(\tR\rletrasErradas\x12#\n" +
 	"\rerros_jogador\x18\x03 \x01(\x05R\ferrosJogador\x12$\n" +
 	"\x0ejogador_da_vez\x18\x04 \x01(\tR\fjogadorDaVez\x12\x1a\n" +
-	"\bmensagem\x18\x05 \x01(\tR\bmensagem\x12%\n" +
-	"\x0ejogo_encerrado\x18\x06 \x01(\bR\rjogoEncerrado\x12\x1f\n" +
+	"\bmensagem\x18\x05 \x01(\tR\bmensagem\x12\x1f\n" +
+	"\vjogo_status\x18\x06 \x01(\x05R\n" +
+	"jogoStatus\x12\x1f\n" +
 	"\vvencedor_id\x18\a \x01(\tR\n" +
 	"vencedorId2\xd6\x03\n" +
 	"\vGameService\x12F\n" +

@@ -14,5 +14,5 @@ Pode ser instalado a partir do tutorial https://grpc.io/docs/languages/go/quicks
 
 ## Para rodar o programa
 - No diretorio raiz (pasta Exercicio4) execute
-    - go run servidor/main.go para rodar o servidor
+    - go run servidor/jogo.go servidor/server.go servidor/util.go servidor/main.go para rodar o servidor
     - go run cliente/main.go para rodar o cliente

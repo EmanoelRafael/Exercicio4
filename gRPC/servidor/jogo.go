@@ -10,6 +10,6 @@ type Jogo struct {
 	LetrasErradas  map[string]bool
 	JogadorDaVez   string
 	VencedorID     string
-	Finalizado     bool
+	Status         int
 	Eliminados     map[string]bool
 }

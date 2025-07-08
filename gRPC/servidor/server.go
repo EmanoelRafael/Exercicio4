@@ -47,18 +47,19 @@ func (s *GameServer) CriarJogo(ctx context.Context, req *pb.CriarJogoRequest) (*
 		LetrasErradas: make(map[string]bool), // compartilhado entre todos os jogadores
 		Eliminados:    make(map[string]bool), // ninguém eliminado no início
 
-		Finalizado: false,
+		Status:     2,
 		VencedorID: "",
 	}
-
-	s.jogos[codigo] = jogo
 
 	msg := "Jogo criado com sucesso"
 	if req.Solo {
 		msg = "Jogo solo criado com sucesso"
 	} else if req.ComAmigos {
+		jogo.Status = 1
 		msg = "Jogo com amigos criado. Compartilhe o código."
 	}
+
+	s.jogos[codigo] = jogo
 
 	return &pb.CriarJogoResponse{
 		CodigoJogo: codigo,
@@ -78,7 +79,7 @@ func (s *GameServer) EntrarJogo(ctx context.Context, req *pb.EntrarJogoRequest) 
 		}, nil
 	}
 
-	if jogo.Finalizado {
+	if jogo.Status == 3 {
 		return &pb.EntrarJogoResponse{
 			Mensagem: "O jogo já foi finalizado",
 			Sucesso:  false,
@@ -108,6 +109,10 @@ func (s *GameServer) EntrarJogo(ctx context.Context, req *pb.EntrarJogoRequest) 
 	jogo.Erros[req.JogadorId] = 0
 	jogo.DicasUsadas[req.JogadorId] = false
 
+	if len(jogo.Jogadores) == 4 {
+		jogo.Status = 2
+	}
+
 	return &pb.EntrarJogoResponse{
 		Mensagem: "Jogador adicionado ao jogo com sucesso",
 		Sucesso:  true,
@@ -119,7 +124,7 @@ func (s *GameServer) PalpitarLetra(ctx context.Context, req *pb.PalpitarLetraReq
 	defer s.mu.Unlock()
 
 	jogo, existe := s.jogos[req.CodigoJogo]
-	if !existe || jogo.Finalizado {
+	if !existe || jogo.Status == 3 {
 		return &pb.AtualizacaoResponse{Mensagem: "Jogo não encontrado ou já finalizado"}, nil
 	}
 
@@ -150,33 +155,33 @@ func (s *GameServer) PalpitarLetra(ctx context.Context, req *pb.PalpitarLetraReq
 			// Verifica se restou só um jogador
 			restantes := jogadoresRestantes(jogo)
 			if len(restantes) == 1 {
-				jogo.Finalizado = true
+				jogo.Status = 3
 				jogo.VencedorID = restantes[0]
 				return &pb.AtualizacaoResponse{
 					Mensagem:       fmt.Sprintf("Jogador %s perdeu. Último jogador restante venceu!", req.JogadorId),
 					PalavraVisivel: string(jogo.PalavraVisivel),
-					JogoEncerrado:  true,
+					JogoStatus:     3,
 					VencedorId:     restantes[0],
 				}, nil
 			} else if len(restantes) == 0 {
-				jogo.Finalizado = true
+				jogo.Status = 3
 				jogo.VencedorID = "nil"
 				fmt.Println("Palpitar letra - Jogador perdeu")
 				return &pb.AtualizacaoResponse{
 					Mensagem:       fmt.Sprintf("Jogador %s perdeu. Jogo encerrado!", req.JogadorId),
 					PalavraVisivel: string(jogo.PalavraVisivel),
-					JogoEncerrado:  true,
+					JogoStatus:     3,
 					VencedorId:     "nil",
 				}, nil
 			}
 		}
 	} else if palavraCompleta(jogo.PalavraVisivel) {
-		jogo.Finalizado = true
+		jogo.Status = 3
 		jogo.VencedorID = req.JogadorId
 		return &pb.AtualizacaoResponse{
 			Mensagem:       "Parabéns! Você completou a palavra e venceu!",
 			PalavraVisivel: string(jogo.PalavraVisivel),
-			JogoEncerrado:  true,
+			JogoStatus:     3,
 			VencedorId:     req.JogadorId,
 		}, nil
 	}
@@ -198,7 +203,7 @@ func (s *GameServer) PalpitarPalavra(ctx context.Context, req *pb.PalpitarPalavr
 	defer s.mu.Unlock()
 
 	jogo, existe := s.jogos[req.CodigoJogo]
-	if !existe || jogo.Finalizado {
+	if !existe || jogo.Status == 3 {
 		return &pb.AtualizacaoResponse{Mensagem: "Jogo não encontrado ou finalizado"}, nil
 	}
 
@@ -208,12 +213,12 @@ func (s *GameServer) PalpitarPalavra(ctx context.Context, req *pb.PalpitarPalavr
 
 	if strings.EqualFold(req.Palavra, jogo.Palavra) {
 		jogo.PalavraVisivel = []rune(jogo.Palavra)
-		jogo.Finalizado = true
+		jogo.Status = 3
 		jogo.VencedorID = req.JogadorId
 		return &pb.AtualizacaoResponse{
 			Mensagem:       "Você acertou a palavra! Vitória!",
 			PalavraVisivel: string(jogo.PalavraVisivel),
-			JogoEncerrado:  true,
+			JogoStatus:     3,
 			VencedorId:     req.JogadorId,
 		}, nil
 	}
@@ -224,12 +229,12 @@ func (s *GameServer) PalpitarPalavra(ctx context.Context, req *pb.PalpitarPalavr
 		jogo.Eliminados[req.JogadorId] = true
 		restantes := jogadoresRestantes(jogo)
 		if len(restantes) == 1 {
-			jogo.Finalizado = true
+			jogo.Status = 3
 			jogo.VencedorID = restantes[0]
 			return &pb.AtualizacaoResponse{
 				Mensagem:       fmt.Sprintf("Jogador %s perdeu. Último jogador restante venceu!", req.JogadorId),
 				PalavraVisivel: string(jogo.PalavraVisivel),
-				JogoEncerrado:  true,
+				JogoStatus:     3,
 				VencedorId:     restantes[0],
 			}, nil
 		}
@@ -250,7 +255,7 @@ func (s *GameServer) PedirDica(ctx context.Context, req *pb.DicaRequest) (*pb.At
 	defer s.mu.Unlock()
 
 	jogo, existe := s.jogos[req.CodigoJogo]
-	if !existe || jogo.Finalizado {
+	if !existe || jogo.Status == 3 {
 		return &pb.AtualizacaoResponse{Mensagem: "Jogo inválido ou finalizado"}, nil
 	}
 
@@ -294,7 +299,7 @@ func (s *GameServer) ObterEstado(ctx context.Context, req *pb.EstadoRequest) (*p
 		PalavraVisivel: palavraVisivel,
 		Mensagem:       "Estado atual do jogo",
 		JogadorDaVez:   jogo.JogadorDaVez,
-		JogoEncerrado:  jogo.Finalizado,
+		JogoStatus:     int32(jogo.Status),
 		VencedorId:     jogo.VencedorID,
 		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
 		ErrosJogador:   int32(jogo.Erros[req.JogadorId]),

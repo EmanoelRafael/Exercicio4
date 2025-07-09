@@ -8,6 +8,16 @@ import (
 )
 
 const widthGame = 44
+const MENU = 1
+const AGUARDANDO_JOGADORES = 2
+const INGRESSO = 3
+const EM_ANDAMENTO = 4
+const FIM_DE_JOGO = 5
+
+const NAO_INICIADO = 0
+const PENDENTE_JOGADORES = 1
+const EM_CURSO = 2
+const FINALIZADO = 3
 
 func desenharBoneco(erros int) {
 	bonecos := []string{
@@ -97,10 +107,9 @@ func printGame() string {
 
 	ret := ""
 
-	fmt.Print(jogadorId, jogo.JogadorDaVez, "\n")
 	reader := bufio.NewReader(os.Stdin)
 
-	if tipoMenu == 1 {
+	if gameStage == 1 {
 		printLinhaGame("FORCA GAME", '-')
 		printLinhaGame("", ' ')
 		printLinhaGame("MENU", ' ')
@@ -118,7 +127,7 @@ func printGame() string {
 				fmt.Println("Opção inválida. Digite novamente. \n=> ")
 			}
 		}
-	} else if tipoMenu == 2 {
+	} else if gameStage == 2 {
 		printLinhaGame("FORCA GAME", '-')
 		printLinhaGame("", ' ')
 		printLinhaGame("AGUARDANDO A ENTRADA DOS JOGADORES", ' ')
@@ -127,8 +136,7 @@ func printGame() string {
 		printLinhaGame(" ", ' ')
 		printLinhaGame("", ' ')
 		printLinhaGame("", '-')
-		return ""
-	} else if tipoMenu == 3 {
+	} else if gameStage == 3 {
 		printLinhaGame("FORCA GAME", '-')
 		printLinhaGame("", ' ')
 		printLinhaGame("INSIRA O CODIGO DO JOGO", ' ')
@@ -140,7 +148,7 @@ func printGame() string {
 		fmt.Print("=> ")
 		ret, _ = reader.ReadString('\n')
 		ret = strings.TrimSpace(ret)
-	} else if tipoMenu == 4 {
+	} else if gameStage == 4 {
 		printLinhaGame("FORCA GAME", '-')
 		printLinhaGame("", ' ')
 		printLinhaGame(string(jogo.PalavraVisivel), ' ')
@@ -174,7 +182,7 @@ func printGame() string {
 				}
 			}
 		}
-	} else if tipoMenu == 5 {
+	} else if gameStage == 5 {
 		printLinhaGame("FORCA GAME", '-')
 		printLinhaGame("", ' ')
 		printLinhaGame(string(jogo.PalavraVisivel), ' ')
@@ -185,7 +193,8 @@ func printGame() string {
 			printLinhaGame("PARABENS, VOCE VENCEU!", ' ')
 		} else {
 			printLinhaGame("", ' ')
-			printLinhaGame("BOM JOGO!", ' ')
+			printLinhaGame("VOCE PERDEU!", ' ')
+			desenharBoneco(jogo.Erros)
 		}
 		printLinhaGame("", ' ')
 		printLinhaGame("", '-')

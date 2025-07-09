@@ -14,53 +14,15 @@ import (
 	"google.golang.org/grpc"
 )
 
-/*
-	menu principal (tela 1)
-		- se iniciou um jogo solo
-			- iniciar jogo solo
-		- se criou um jogo com amigos
-			- tela de espera para inicio do jogo (tela 2)
-				- confirma inicio do jogo
-					- inicia jogo
-		- se entrar em um jogo
-			- tela para inserir o codigo do jogo (tela 3)
-				- entra no jogo
-	tela do jogo (tela 4)
-		- palavra
-		- boneco do jogador
-		- msg de status (esperando o jogador x jogar)
-		- opcoes (se for a vez do jogador - chutar letra, chutar palavra, pedir dica)
-	tela de fim de jogo
-		- tem mensagem de parabens ou derrota (tela 5)
-
-
-		fmt.Println("\n------ MENU ------")
-
-fmt.Println("1. Criar jogo solo")
-fmt.Println("2. Criar jogo com amigos")
-fmt.Println("3. Entrar em jogo")
-fmt.Println("4. Palpitar letra")
-fmt.Println("5. Palpitar palavra")
-fmt.Println("6. Pedir dica")
-fmt.Println("7. Obter estado do jogo") //Quando o rabbitMQ for implementado isso vai ser desnecessario?
-fmt.Println("0. Sair")
-fmt.Print("Escolha uma opção: ")
-
-// se o estado do jogo for em espera pela entrada de novos integrantes (dar a opcao de continuar se tiver mais de 2 ou mais integrantes e
-
-	// espera 10s para atualizar o estado do jogo, se tiver 4 integrantes o jogo inicia automaticamente)
-	// se o estado do jogo for ativo e nao estiver na vez do jogador atual espera 5s para atualizar o estado do jogo
-	// se o estado do jogo for ativo e estiver na vez do jogador atual apresenta as opcoes pro jogador (pedir dica, chutar letra e chutar palavra)
-*/
 var jogadorId string
 var codigoJogo string
-var tipoMenu = 1
+var gameStage = MENU
 var jogo *Jogo
 var flag = false
-var jogoStatusAntigo = 0
+var jogoStatusAntigo = NAO_INICIADO
 
 func main() {
-	// Conexão com o servidor
+
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Erro ao conectar: %v", err)
@@ -78,7 +40,7 @@ func main() {
 		LetrasErradas:  []string{},
 		JogadorDaVez:   "",
 		VencedorID:     "",
-		Status:         0,
+		Status:         NAO_INICIADO,
 	}
 
 	fmt.Print("Digite seu ID de jogador: ")
@@ -97,39 +59,36 @@ func main() {
 			opcao = printGame()
 		}
 
-		if tipoMenu == 1 { //Menu Principal
-			fmt.Print("menu 1")
-		} else if tipoMenu != 5 && tipoMenu != 3 { // Tela de espera ou de jogo
-
-			if jogo.Status == 1 { // O jogo esta aguardando a execucao
-				if jogoStatusAntigo == 0 { // O status anterior era a tela de menu inicial
-					tipoMenu = 2
+		if gameStage != FIM_DE_JOGO && gameStage != INGRESSO && gameStage != MENU {
+			if jogo.Status == PENDENTE_JOGADORES {
+				if jogoStatusAntigo == NAO_INICIADO {
+					gameStage = AGUARDANDO_JOGADORES
 					flag = true
-					jogoStatusAntigo = 1
+					jogoStatusAntigo = PENDENTE_JOGADORES
 				}
 				time.Sleep(3 * time.Second)
-			} else if jogo.Status == 2 {
-				if jogoStatusAntigo == 1 {
-					tipoMenu = 4
-					jogoStatusAntigo = 2
-				} else if jogoStatusAntigo == 0 {
-					tipoMenu = 4
+			} else if jogo.Status == EM_CURSO {
+				if jogoStatusAntigo == PENDENTE_JOGADORES {
+					gameStage = EM_ANDAMENTO
+					jogoStatusAntigo = EM_CURSO
+				} else if jogoStatusAntigo == NAO_INICIADO {
+					gameStage = EM_ANDAMENTO
 				}
 				flag = false
 				if jogo.JogadorDaVez != jogadorId {
 					time.Sleep(3 * time.Second)
 				}
-			} else if jogo.Status == 3 {
-				tipoMenu = 5
+			} else if jogo.Status == FINALIZADO {
+				gameStage = FIM_DE_JOGO
 			}
 
-		} else if tipoMenu == 3 { //tela de inserir o codigo do jogo
-			fmt.Print("menu 3")
-		} else { // tela final
-			tipoMenu = 1
+		} else if gameStage == FIM_DE_JOGO {
+			gameStage = MENU
+			jogoStatusAntigo = NAO_INICIADO
+			continue
 		}
 
-		if tipoMenu == 1 {
+		if gameStage == MENU {
 			switch opcao {
 			case "1":
 				resp, err := client.CriarJogo(ctx, &pb.CriarJogoRequest{
@@ -142,8 +101,8 @@ func main() {
 				}
 				codigoJogo = resp.CodigoJogo
 				jogo.Codigo = resp.CodigoJogo
-				tipoMenu = 4
-				fmt.Println(resp.Mensagem)
+				gameStage = EM_ANDAMENTO
+				//fmt.Println(resp.Mensagem)
 
 			case "2":
 				resp, err := client.CriarJogo(ctx, &pb.CriarJogoRequest{
@@ -156,9 +115,9 @@ func main() {
 				}
 				codigoJogo = resp.CodigoJogo
 				jogo.Codigo = resp.CodigoJogo
-				tipoMenu = 2
+				gameStage = AGUARDANDO_JOGADORES
 
-				fmt.Println(resp.Mensagem)
+				//fmt.Println(resp.Mensagem)
 
 			case "3":
 				fmt.Print("Digite o codigo do jogo=> ")
@@ -173,10 +132,10 @@ func main() {
 					continue
 				}
 				if resp.Sucesso {
-					tipoMenu = 2
+					gameStage = AGUARDANDO_JOGADORES
 					jogo.Codigo = codigoJogo
 				}
-				fmt.Println(resp.Mensagem)
+				//fmt.Println(resp.Mensagem)
 			case "0":
 				fmt.Println("Saindo...")
 				return
@@ -184,14 +143,14 @@ func main() {
 			default:
 				fmt.Println("Opção inválida.")
 			}
-		} else if tipoMenu == 4 && jogo.JogadorDaVez == jogadorId {
+		} else if gameStage == EM_ANDAMENTO && jogo.JogadorDaVez == jogadorId {
 			switch opcao {
 			case "1":
 				fmt.Print("Digite uma letra: ")
 				letra, _ := reader.ReadString('\n')
 				letra = strings.TrimSpace(letra)
 
-				resp, err := client.PalpitarLetra(ctx, &pb.PalpitarLetraRequest{
+				_, err := client.PalpitarLetra(ctx, &pb.PalpitarLetraRequest{
 					JogadorId:  jogadorId,
 					CodigoJogo: codigoJogo,
 					Letra:      letra,
@@ -200,15 +159,15 @@ func main() {
 					log.Println("Erro:", err)
 					continue
 				}
-				fmt.Println("Resposta:", resp.Mensagem)
-				fmt.Println("Palavra:", resp.PalavraVisivel)
+				//fmt.Println("Resposta:", resp.Mensagem)
+				//fmt.Println("Palavra:", resp.PalavraVisivel)
 
 			case "2":
 				fmt.Print("Digite a palavra: ")
 				palpite, _ := reader.ReadString('\n')
 				palpite = strings.TrimSpace(palpite)
 
-				resp, err := client.PalpitarPalavra(ctx, &pb.PalpitarPalavraRequest{
+				_, err := client.PalpitarPalavra(ctx, &pb.PalpitarPalavraRequest{
 					JogadorId:  jogadorId,
 					CodigoJogo: codigoJogo,
 					Palavra:    palpite,
@@ -217,10 +176,10 @@ func main() {
 					log.Println("Erro:", err)
 					continue
 				}
-				fmt.Println("Resposta:", resp.Mensagem)
+				//fmt.Println("Resposta:", resp.Mensagem)
 
 			case "3":
-				resp, err := client.PedirDica(ctx, &pb.DicaRequest{
+				_, err := client.PedirDica(ctx, &pb.DicaRequest{
 					JogadorId:  jogadorId,
 					CodigoJogo: codigoJogo,
 				})
@@ -228,8 +187,8 @@ func main() {
 					log.Println("Erro:", err)
 					continue
 				}
-				fmt.Println("Dica:", resp.Mensagem)
-				fmt.Println("Palavra:", resp.PalavraVisivel)
+				//fmt.Println("Dica:", resp.Mensagem)
+				//fmt.Println("Palavra:", resp.PalavraVisivel)
 
 			case "0":
 				fmt.Println("Saindo...")
@@ -240,7 +199,7 @@ func main() {
 			}
 		}
 
-		if tipoMenu == 2 || tipoMenu == 4 {
+		if gameStage == AGUARDANDO_JOGADORES || gameStage == EM_ANDAMENTO {
 			resp, err := client.ObterEstado(ctx, &pb.EstadoRequest{
 				CodigoJogo: codigoJogo,
 				JogadorId:  jogadorId,
@@ -256,8 +215,8 @@ func main() {
 			jogo.JogadorDaVez = resp.JogadorDaVez
 			jogo.Status = int(resp.JogoStatus)
 			jogo.VencedorID = resp.VencedorId
-			if jogo.Status == 3 {
-				tipoMenu = 5
+			if jogo.Status == FINALIZADO {
+				gameStage = FIM_DE_JOGO
 			}
 		}
 	}

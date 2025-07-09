@@ -102,8 +102,6 @@ func main() {
 				codigoJogo = resp.CodigoJogo
 				jogo.Codigo = resp.CodigoJogo
 				gameStage = EM_ANDAMENTO
-				//fmt.Println(resp.Mensagem)
-
 			case "2":
 				resp, err := client.CriarJogo(ctx, &pb.CriarJogoRequest{
 					JogadorId: jogadorId,
@@ -116,9 +114,6 @@ func main() {
 				codigoJogo = resp.CodigoJogo
 				jogo.Codigo = resp.CodigoJogo
 				gameStage = AGUARDANDO_JOGADORES
-
-				//fmt.Println(resp.Mensagem)
-
 			case "3":
 				fmt.Print("Digite o codigo do jogo=> ")
 				codigoJogo, _ = reader.ReadString('\n')
@@ -135,7 +130,6 @@ func main() {
 					gameStage = AGUARDANDO_JOGADORES
 					jogo.Codigo = codigoJogo
 				}
-				//fmt.Println(resp.Mensagem)
 			case "0":
 				fmt.Println("Saindo...")
 				return
@@ -159,9 +153,6 @@ func main() {
 					log.Println("Erro:", err)
 					continue
 				}
-				//fmt.Println("Resposta:", resp.Mensagem)
-				//fmt.Println("Palavra:", resp.PalavraVisivel)
-
 			case "2":
 				fmt.Print("Digite a palavra: ")
 				palpite, _ := reader.ReadString('\n')
@@ -176,8 +167,6 @@ func main() {
 					log.Println("Erro:", err)
 					continue
 				}
-				//fmt.Println("Resposta:", resp.Mensagem)
-
 			case "3":
 				_, err := client.PedirDica(ctx, &pb.DicaRequest{
 					JogadorId:  jogadorId,
@@ -187,9 +176,6 @@ func main() {
 					log.Println("Erro:", err)
 					continue
 				}
-				//fmt.Println("Dica:", resp.Mensagem)
-				//fmt.Println("Palavra:", resp.PalavraVisivel)
-
 			case "0":
 				fmt.Println("Saindo...")
 				return

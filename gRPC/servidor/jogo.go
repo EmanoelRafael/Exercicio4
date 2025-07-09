@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type Jogo struct {
 	Codigo         string
 	Palavra        string
@@ -12,4 +14,5 @@ type Jogo struct {
 	VencedorID     string
 	Status         int
 	Eliminados     map[string]bool
+	UltimaJogada   time.Time
 }

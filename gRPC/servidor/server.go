@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	pb "ForcaGame/proto"
 )
@@ -13,12 +14,48 @@ type GameServer struct {
 	pb.UnimplementedGameServiceServer
 	jogos map[string]*Jogo
 	mu    sync.Mutex
-	// aqui você pode adicionar mapas para armazenar jogos, jogadores, etc.
 }
 
 func NewGameServer() *GameServer {
 	return &GameServer{
 		jogos: make(map[string]*Jogo),
+	}
+}
+
+func (s *GameServer) monitorarTimeout(codigo string) {
+	for {
+		time.Sleep(5 * time.Second)
+
+		s.mu.Lock()
+		jogo, ok := s.jogos[codigo]
+		if !ok || jogo.Status != EM_CURSO {
+			s.mu.Unlock()
+			return
+		}
+
+		if time.Since(jogo.UltimaJogada) > 60*time.Second {
+			jogador := jogo.JogadorDaVez
+			fmt.Printf("Jogador %s foi eliminado por inatividade\n", jogador)
+			jogo.Eliminados[jogador] = true
+			jogo.Erros[jogador] = 6
+
+			restantes := jogadoresRestantes(jogo)
+			if len(restantes) == 1 {
+				jogo.Status = FINALIZADO
+				jogo.VencedorID = restantes[0]
+				s.mu.Unlock()
+				return
+			} else if len(restantes) == 0 {
+				jogo.Status = FINALIZADO
+				jogo.VencedorID = "nil"
+				s.mu.Unlock()
+				return
+			}
+
+			trocarTurno(jogo)
+			jogo.UltimaJogada = time.Now()
+		}
+		s.mu.Unlock()
 	}
 }
 
@@ -49,6 +86,8 @@ func (s *GameServer) CriarJogo(ctx context.Context, req *pb.CriarJogoRequest) (*
 
 		Status:     EM_CURSO,
 		VencedorID: "",
+
+		UltimaJogada: time.Now(),
 	}
 
 	msg := "Jogo criado com sucesso"
@@ -60,6 +99,7 @@ func (s *GameServer) CriarJogo(ctx context.Context, req *pb.CriarJogoRequest) (*
 	}
 
 	s.jogos[codigo] = jogo
+	go s.monitorarTimeout(codigo)
 
 	return &pb.CriarJogoResponse{
 		CodigoJogo: codigo,
@@ -125,15 +165,18 @@ func (s *GameServer) PalpitarLetra(ctx context.Context, req *pb.PalpitarLetraReq
 
 	jogo, existe := s.jogos[req.CodigoJogo]
 	if !existe || jogo.Status == FINALIZADO {
+		jogo.UltimaJogada = time.Now()
 		return &pb.AtualizacaoResponse{Mensagem: "Jogo não encontrado ou já finalizado"}, nil
 	}
 
 	if jogo.JogadorDaVez != req.JogadorId {
+		jogo.UltimaJogada = time.Now()
 		return &pb.AtualizacaoResponse{Mensagem: "Não é sua vez"}, nil
 	}
 
 	letra := []rune(req.Letra)
 	if len(letra) != 1 {
+		jogo.UltimaJogada = time.Now()
 		return &pb.AtualizacaoResponse{Mensagem: "Letra inválida"}, nil
 	}
 
@@ -157,6 +200,7 @@ func (s *GameServer) PalpitarLetra(ctx context.Context, req *pb.PalpitarLetraReq
 			if len(restantes) == 1 {
 				jogo.Status = FINALIZADO
 				jogo.VencedorID = restantes[0]
+				jogo.UltimaJogada = time.Now()
 				return &pb.AtualizacaoResponse{
 					Mensagem:       fmt.Sprintf("Jogador %s perdeu. Último jogador restante venceu!", req.JogadorId),
 					PalavraVisivel: string(jogo.PalavraVisivel),
@@ -167,6 +211,7 @@ func (s *GameServer) PalpitarLetra(ctx context.Context, req *pb.PalpitarLetraReq
 				jogo.Status = FINALIZADO
 				jogo.VencedorID = "nil"
 				fmt.Println("Palpitar letra - Jogador perdeu")
+				jogo.UltimaJogada = time.Now()
 				return &pb.AtualizacaoResponse{
 					Mensagem:       fmt.Sprintf("Jogador %s perdeu. Jogo encerrado!", req.JogadorId),
 					PalavraVisivel: string(jogo.PalavraVisivel),
@@ -178,6 +223,7 @@ func (s *GameServer) PalpitarLetra(ctx context.Context, req *pb.PalpitarLetraReq
 	} else if palavraCompleta(jogo.PalavraVisivel) {
 		jogo.Status = FINALIZADO
 		jogo.VencedorID = req.JogadorId
+		jogo.UltimaJogada = time.Now()
 		return &pb.AtualizacaoResponse{
 			Mensagem:       "Parabéns! Você completou a palavra e venceu!",
 			PalavraVisivel: string(jogo.PalavraVisivel),
@@ -189,6 +235,7 @@ func (s *GameServer) PalpitarLetra(ctx context.Context, req *pb.PalpitarLetraReq
 	fmt.Println("O jogador da vez antes era: ", jogo.JogadorDaVez)
 	trocarTurno(jogo)
 	fmt.Println("O jogador da vez agora eh: ", jogo.JogadorDaVez)
+	jogo.UltimaJogada = time.Now()
 	return &pb.AtualizacaoResponse{
 		Mensagem:       "Letra processada",
 		PalavraVisivel: string(jogo.PalavraVisivel),
@@ -204,10 +251,12 @@ func (s *GameServer) PalpitarPalavra(ctx context.Context, req *pb.PalpitarPalavr
 
 	jogo, existe := s.jogos[req.CodigoJogo]
 	if !existe || jogo.Status == FINALIZADO {
+		jogo.UltimaJogada = time.Now()
 		return &pb.AtualizacaoResponse{Mensagem: "Jogo não encontrado ou finalizado"}, nil
 	}
 
 	if jogo.JogadorDaVez != req.JogadorId {
+		jogo.UltimaJogada = time.Now()
 		return &pb.AtualizacaoResponse{Mensagem: "Não é sua vez"}, nil
 	}
 
@@ -215,6 +264,7 @@ func (s *GameServer) PalpitarPalavra(ctx context.Context, req *pb.PalpitarPalavr
 		jogo.PalavraVisivel = []rune(jogo.Palavra)
 		jogo.Status = FINALIZADO
 		jogo.VencedorID = req.JogadorId
+		jogo.UltimaJogada = time.Now()
 		return &pb.AtualizacaoResponse{
 			Mensagem:       "Você acertou a palavra! Vitória!",
 			PalavraVisivel: string(jogo.PalavraVisivel),
@@ -231,6 +281,7 @@ func (s *GameServer) PalpitarPalavra(ctx context.Context, req *pb.PalpitarPalavr
 		if len(restantes) == 1 {
 			jogo.Status = FINALIZADO
 			jogo.VencedorID = restantes[0]
+			jogo.UltimaJogada = time.Now()
 			return &pb.AtualizacaoResponse{
 				Mensagem:       fmt.Sprintf("Jogador %s perdeu. Último jogador restante venceu!", req.JogadorId),
 				PalavraVisivel: string(jogo.PalavraVisivel),
@@ -241,6 +292,7 @@ func (s *GameServer) PalpitarPalavra(ctx context.Context, req *pb.PalpitarPalavr
 	}
 
 	trocarTurno(jogo)
+	jogo.UltimaJogada = time.Now()
 	return &pb.AtualizacaoResponse{
 		Mensagem:       "Palpite errado. Próximo jogador.",
 		PalavraVisivel: string(jogo.PalavraVisivel),
@@ -256,10 +308,12 @@ func (s *GameServer) PedirDica(ctx context.Context, req *pb.DicaRequest) (*pb.At
 
 	jogo, existe := s.jogos[req.CodigoJogo]
 	if !existe || jogo.Status == 3 {
+		jogo.UltimaJogada = time.Now()
 		return &pb.AtualizacaoResponse{Mensagem: "Jogo inválido ou finalizado"}, nil
 	}
 
 	if jogo.DicasUsadas[req.JogadorId] {
+		jogo.UltimaJogada = time.Now()
 		return &pb.AtualizacaoResponse{Mensagem: "Você já usou sua dica"}, nil
 	}
 
@@ -272,6 +326,7 @@ func (s *GameServer) PedirDica(ctx context.Context, req *pb.DicaRequest) (*pb.At
 		}
 	}
 
+	jogo.UltimaJogada = time.Now()
 	return &pb.AtualizacaoResponse{
 		Mensagem:       "Dica revelada. Você joga novamente.",
 		PalavraVisivel: string(jogo.PalavraVisivel),

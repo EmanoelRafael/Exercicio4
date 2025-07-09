@@ -162,7 +162,6 @@ func main() {
 
 			case "3":
 				fmt.Print("Digite o codigo do jogo=> ")
-				codigoJogo := ""
 				codigoJogo, _ = reader.ReadString('\n')
 				codigoJogo = strings.TrimSpace(codigoJogo)
 				resp, err := client.EntrarJogo(ctx, &pb.EntrarJogoRequest{
@@ -174,7 +173,7 @@ func main() {
 					continue
 				}
 				if resp.Sucesso {
-					tipoMenu = 4
+					tipoMenu = 2
 					jogo.Codigo = codigoJogo
 				}
 				fmt.Println(resp.Mensagem)
@@ -256,6 +255,10 @@ func main() {
 			jogo.LetrasErradas = resp.LetrasErradas
 			jogo.JogadorDaVez = resp.JogadorDaVez
 			jogo.Status = int(resp.JogoStatus)
+			jogo.VencedorID = resp.VencedorId
+			if jogo.Status == 3 {
+				tipoMenu = 5
+			}
 		}
 	}
 }

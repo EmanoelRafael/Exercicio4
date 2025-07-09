@@ -1,6 +1,7 @@
 # ForcaGame
 Repositório para armazenamento do código desenvolvido durante atividade avaliativa da cadeira de Programação Concorrente e Distribuída
 
+# Para a versão gRPC
 
 ## Ferramentas Necessarias
 
@@ -15,4 +16,4 @@ Pode ser instalado a partir do tutorial https://grpc.io/docs/languages/go/quicks
 ## Para rodar o programa
 - No diretorio raiz (pasta Exercicio4) execute
     - go run servidor/jogo.go servidor/server.go servidor/util.go servidor/main.go para rodar o servidor
-    - go run cliente/main.go para rodar o cliente
+    - go run cliente/jogo.go cliente/util.go cliente/main.go para rodar o cliente

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -91,7 +93,13 @@ func printLinhaGame(msg string, placeholder rune) {
 	fmt.Println(msgFinal)
 }
 
-func printGame(msg string) {
+func printGame() string {
+
+	ret := ""
+
+	fmt.Print(jogadorId, jogo.JogadorDaVez, "\n")
+	reader := bufio.NewReader(os.Stdin)
+
 	if tipoMenu == 1 {
 		printLinhaGame("FORCA GAME", '-')
 		printLinhaGame("", ' ')
@@ -103,6 +111,13 @@ func printGame(msg string) {
 		printLinhaGame("", ' ')
 		printLinhaGame("", '-')
 		fmt.Print("=> ")
+		for ret != "1" && ret != "2" && ret != "3" && ret != "0" {
+			ret, _ = reader.ReadString('\n')
+			ret = strings.TrimSpace(ret)
+			if ret != "1" && ret != "2" && ret != "3" && ret != "0" {
+				fmt.Println("Opção inválida. Digite novamente. \n=> ")
+			}
+		}
 	} else if tipoMenu == 2 {
 		printLinhaGame("FORCA GAME", '-')
 		printLinhaGame("", ' ')
@@ -112,6 +127,7 @@ func printGame(msg string) {
 		printLinhaGame(" ", ' ')
 		printLinhaGame("", ' ')
 		printLinhaGame("", '-')
+		return ""
 	} else if tipoMenu == 3 {
 		printLinhaGame("FORCA GAME", '-')
 		printLinhaGame("", ' ')
@@ -122,6 +138,9 @@ func printGame(msg string) {
 		printLinhaGame("", ' ')
 		printLinhaGame("", '-')
 		fmt.Print("=> ")
+		ret := ""
+		ret, _ = reader.ReadString('\n')
+		ret = strings.TrimSpace(ret)
 	} else if tipoMenu == 4 {
 		printLinhaGame("FORCA GAME", '-')
 		printLinhaGame("", ' ')
@@ -134,6 +153,7 @@ func printGame(msg string) {
 		printLinhaGame(" ", ' ')
 		desenharBoneco(jogo.Erros)
 		printLinhaGame(" ", ' ')
+
 		if jogadorId == jogo.JogadorDaVez {
 			printLinhaGame("1 - CHUTAR LETRA", ' ')
 			printLinhaGame("2 - CHUTAR PALAVRA", ' ')
@@ -147,6 +167,13 @@ func printGame(msg string) {
 		printLinhaGame("", '-')
 		if jogadorId == jogo.JogadorDaVez {
 			fmt.Print("=> ")
+			for ret != "1" && ret != "2" && ret != "3" && ret != "0" {
+				ret, _ = reader.ReadString('\n')
+				ret = strings.TrimSpace(ret)
+				if ret != "1" && ret != "2" && ret != "3" && ret != "0" {
+					fmt.Println("Opção inválida. Digite novamente. \n=> ")
+				}
+			}
 		}
 	} else if tipoMenu == 5 {
 		printLinhaGame("FORCA GAME", '-')
@@ -165,4 +192,5 @@ func printGame(msg string) {
 		printLinhaGame("", '-')
 	}
 
+	return ret
 }

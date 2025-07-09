@@ -3,6 +3,10 @@ package main
 import "math/rand"
 
 const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+const NAO_INICIADO = 0
+const PENDENTE_JOGADORES = 1
+const EM_CURSO = 2
+const FINALIZADO = 3
 
 func GerarCodigoJogo() string {
 	b := make([]byte, 6)

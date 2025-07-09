@@ -8,12 +8,24 @@ const PENDENTE_JOGADORES = 1
 const EM_CURSO = 2
 const FINALIZADO = 3
 
+var IDX_PALAVRA = 0
+var palavras = []string{"Desasnado", "Filantropo", "Idiossincrasia", "Juvenilizante", "Odiento", "Quimera", "Verossimilhança", "Xaropear", "Yanomami", "Vicissitude"}
+
 func GerarCodigoJogo() string {
 	b := make([]byte, 6)
 	for i := range b {
 		b[i] = letras[rand.Intn(len(letras))]
 	}
 	return string(b)
+}
+
+func obterPalavra() string {
+	palavra := palavras[IDX_PALAVRA]
+	IDX_PALAVRA += 1
+	if IDX_PALAVRA >= len(palavras) {
+		IDX_PALAVRA = 0
+	}
+	return palavra
 }
 
 func trocarTurno(j *Jogo) {

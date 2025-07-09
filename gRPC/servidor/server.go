@@ -64,7 +64,7 @@ func (s *GameServer) CriarJogo(ctx context.Context, req *pb.CriarJogoRequest) (*
 	defer s.mu.Unlock()
 
 	// Palavra padrão por enquanto
-	palavra := "golang"
+	palavra := obterPalavra()
 	visivel := make([]rune, len(palavra))
 	for i := range visivel {
 		visivel[i] = '_'

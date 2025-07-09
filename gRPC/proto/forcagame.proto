@@ -5,16 +5,13 @@ package ForcaGame;
 option go_package = "ForcaGame/proto;pb";
 
 service GameService {
-  // Criação de jogos
   rpc CriarJogo (CriarJogoRequest) returns (CriarJogoResponse);
   rpc EntrarJogo (EntrarJogoRequest) returns (EntrarJogoResponse);
 
-  // Ações no jogo
   rpc PalpitarLetra (PalpitarLetraRequest) returns (AtualizacaoResponse);
   rpc PalpitarPalavra (PalpitarPalavraRequest) returns (AtualizacaoResponse);
   rpc PedirDica (DicaRequest) returns (AtualizacaoResponse);
 
-  // Consulta de estado (opcional)
   rpc ObterEstado (EstadoRequest) returns (AtualizacaoResponse);
 }
 
@@ -31,7 +28,7 @@ message CriarJogoResponse {
 
 message EntrarJogoRequest {
   string jogador_id = 1;
-  string codigo_jogo = 2; // vazio se for jogo aleatório
+  string codigo_jogo = 2;
 }
 
 message EntrarJogoResponse {

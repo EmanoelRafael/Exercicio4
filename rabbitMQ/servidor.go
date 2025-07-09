@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
+	"os"
 	"strings"
 	"time"
 
@@ -29,6 +31,16 @@ func failOnError(err error, msg string) {
 	}
 }
 
+func getRandomWord(filename string) (string, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return "", err
+	}
+
+	words := strings.Split(string(data), "\n")
+	return words[rand.Intn(len(words))], nil
+}
+
 func main() {
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	failOnError(err, "Conexão RabbitMQ")
@@ -45,7 +57,7 @@ func main() {
 	failOnError(err, "Consumo de palpites")
 
 	// Estado inicial do jogo
-	palavra := "golang"
+	palavra, _ := getRandomWord("words.txt")
 	progresso := strings.Repeat("_", len(palavra))
 	tentativas := 0
 	letras := []string{}

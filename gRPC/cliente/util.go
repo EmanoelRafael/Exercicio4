@@ -138,7 +138,6 @@ func printGame() string {
 		printLinhaGame("", ' ')
 		printLinhaGame("", '-')
 		fmt.Print("=> ")
-		ret := ""
 		ret, _ = reader.ReadString('\n')
 		ret = strings.TrimSpace(ret)
 	} else if tipoMenu == 4 {

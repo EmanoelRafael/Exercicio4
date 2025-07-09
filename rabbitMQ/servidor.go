@@ -111,6 +111,29 @@ func main() {
 
 		if strings.Contains(strings.Join(letras, ""), letra) {
 			fmt.Println("Letra repetida. Ignorando.")
+
+			// Reenvia o estado atual para os dois jogadores sem mudar o turno
+			state := GameState{
+				Palavra:      palavra,
+				Progresso:    progresso,
+				Tentativas:   tentativas,
+				MaxErros:     maxErros,
+				LetrasUsadas: letras,
+				Turno:        turno,
+				Encerrado:    encerrado,
+				Vencedor:     vencedor,
+			}
+
+			stateBytes, _ := json.Marshal(state)
+
+			for _, cliente := range jogadores {
+				ch.QueueDeclare(cliente, false, false, false, false, nil)
+				ch.Publish("", cliente, false, false, amqp.Publishing{
+					ContentType: "application/json",
+					Body:        stateBytes,
+				})
+			}
+
 			continue
 		}
 

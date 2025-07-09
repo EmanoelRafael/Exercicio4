@@ -273,7 +273,6 @@ func (s *GameServer) PalpitarPalavra(ctx context.Context, req *pb.PalpitarPalavr
 		}, nil
 	}
 
-	// Errou a palavra
 	jogo.Erros[req.JogadorId]++
 	if jogo.Erros[req.JogadorId] >= 6 {
 		jogo.Eliminados[req.JogadorId] = true

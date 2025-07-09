@@ -39,7 +39,6 @@ func trocarTurno(j *Jogo) {
 		}
 	}
 
-	// Gira até encontrar o próximo não eliminado
 	for {
 		idx = (idx + 1) % len(jogadores)
 		if !j.Eliminados[jogadores[idx]] {

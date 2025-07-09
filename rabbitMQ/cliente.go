@@ -12,14 +12,14 @@ import (
 )
 
 type GameState struct {
-	Palavra      string
-	Progresso    string
-	Tentativas   int
-	MaxErros     int
-	LetrasUsadas []string
-	Turno        int
-	Encerrado    bool
-	Vencedor     string
+	Palavra      string   `json:"palavra"`
+	Progresso    string   `json:"progresso"`
+	Tentativas   int      `json:"tentativas"`
+	MaxErros     int      `json:"max_erros"`
+	LetrasUsadas []string `json:"letras_usadas"`
+	Turno        int      `json:"turno"`
+	Encerrado    bool     `json:"encerrado"`
+	Vencedor     string   `json:"vencedor"`
 }
 
 func failOnError(err error, msg string) {
@@ -71,13 +71,16 @@ func main() {
 			letra, _ := reader.ReadString('\n')
 			letra = strings.TrimSpace(letra)
 
-			ch.Publish("", "palpites", false, false, amqp.Publishing{
+			err := ch.Publish("", "palpites", false, false, amqp.Publishing{
 				ContentType: "text/plain",
 				Body:        []byte(letra),
 				Headers: amqp.Table{
 					"player": clienteID,
 				},
 			})
+			if err != nil {
+				fmt.Printf("Erro ao enviar palpite: %s\n", err)
+			}
 		}
 	}
 }

@@ -123,7 +123,7 @@ func printGame() string {
 		printLinhaGame("", ' ')
 		printLinhaGame("AGUARDANDO A ENTRADA DOS JOGADORES", ' ')
 		printLinhaGame(" ", ' ')
-		printLinhaGame(" ", ' ')
+		printLinhaGame("CODIGO DO JOGO: "+jogo.Codigo, ' ')
 		printLinhaGame(" ", ' ')
 		printLinhaGame("", ' ')
 		printLinhaGame("", '-')

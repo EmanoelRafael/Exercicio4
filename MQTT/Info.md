@@ -1,0 +1,1 @@
+## Versão do jogo implementada utilizando o MQTT como middleware de mesageria

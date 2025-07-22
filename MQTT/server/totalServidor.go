@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 
@@ -70,6 +71,12 @@ type AtualizacaoResponse struct {
 	JogadorDaVez   string   `json:"jogador_da_vez"`
 	JogoStatus     int      `json:"jogo_status"`
 	VencedorId     string   `json:"vencedor_id"`
+}
+
+type PalpitarLetraRequest struct {
+	JogadorId  string `json:"jogador_id"`
+	CodigoJogo string `json:"codigo_jogo"`
+	Letra      string `json:"letra"`
 }
 
 // Mapa global de jogos e mutex
@@ -182,6 +189,7 @@ func criarJogoHandler(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	msgResp := "Jogo criado com sucesso"
+	fmt.Println("Jogo criado com sucesso. A palavra escolhida foi " + palavra)
 	if req.Solo {
 		msgResp = "Jogo solo criado com sucesso"
 	} else if req.ComAmigos {
@@ -308,6 +316,83 @@ func obterEstadoHandler(client mqtt.Client, msg mqtt.Message) {
 	client.Publish(topicResp, 0, false, respBytes)
 }
 
+func palpitarLetraHandler(client mqtt.Client, msg mqtt.Message) {
+	var req PalpitarLetraRequest
+	err := json.Unmarshal(msg.Payload(), &req)
+	if err != nil {
+		log.Println("Erro ao decodificar PalpitarLetraRequest:", err)
+		return
+	}
+
+	jogosManager.mu.Lock()
+	defer jogosManager.mu.Unlock()
+
+	jogo, existe := jogosManager.jogos[req.CodigoJogo]
+	if !existe || jogo.Status == FINALIZADO {
+		return
+	}
+
+	if jogo.JogadorDaVez != req.JogadorId {
+		resp := AtualizacaoResponse{
+			Mensagem:       "Não é sua vez",
+			PalavraVisivel: string(jogo.PalavraVisivel),
+			JogoStatus:     jogo.Status,
+			JogadorDaVez:   jogo.JogadorDaVez,
+		}
+		respBytes, _ := json.Marshal(resp)
+		topicResp := fmt.Sprintf("forca/resp/palpitar_letra/%s", req.JogadorId)
+		client.Publish(topicResp, 0, false, respBytes)
+		return
+	}
+
+	letra := []rune(req.Letra)
+	if len(letra) != 1 {
+		resp := AtualizacaoResponse{
+			Mensagem:       "Letra inválida",
+			PalavraVisivel: string(jogo.PalavraVisivel),
+			JogoStatus:     jogo.Status,
+			JogadorDaVez:   jogo.JogadorDaVez,
+		}
+		respBytes, _ := json.Marshal(resp)
+		topicResp := fmt.Sprintf("forca/resp/palpitar_letra/%s", req.JogadorId)
+		client.Publish(topicResp, 0, false, respBytes)
+		return
+	}
+
+	palpite := strings.ToUpper(req.Letra)
+	acertou := false
+	resultado := "Letra correta"
+	for i, l := range jogo.Palavra {
+		if strings.ToUpper(string(l)) == palpite {
+			jogo.PalavraVisivel[i] = l
+			acertou = true
+		}
+	}
+
+	if !acertou {
+		jogo.Erros[req.JogadorId]++
+		jogo.LetrasErradas[palpite] = true
+		resultado = "Letra incorreta. Restam X tentativas"
+	}
+
+	// Troca turno se não venceu
+	if !palavraCompleta(jogo.PalavraVisivel) {
+		trocarTurno(jogo)
+	}
+
+	resp := AtualizacaoResponse{
+		Mensagem:       resultado,
+		PalavraVisivel: string(jogo.PalavraVisivel),
+		ErrosJogador:   jogo.Erros[req.JogadorId],
+		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
+		JogadorDaVez:   jogo.JogadorDaVez,
+		JogoStatus:     jogo.Status,
+	}
+	respBytes, _ := json.Marshal(resp)
+	topicResp := fmt.Sprintf("forca/resp/palpitar_letra/%s", req.JogadorId)
+	client.Publish(topicResp, 0, false, respBytes)
+}
+
 func main() {
 	// Inicializa aleatoriedade para geração de código
 	time.Sleep(1 * time.Millisecond)
@@ -328,6 +413,7 @@ func main() {
 	client.Subscribe("forca/criar_jogo", 0, criarJogoHandler)
 	client.Subscribe("forca/entrar_jogo", 0, entrarJogoHandler)
 	client.Subscribe("forca/obter_estado", 0, obterEstadoHandler)
+	client.Subscribe("forca/palpitar_letra", 0, palpitarLetraHandler)
 
 	// Mantém o servidor rodando
 	select {}

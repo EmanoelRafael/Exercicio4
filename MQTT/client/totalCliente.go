@@ -557,6 +557,15 @@ func main() {
 				fmt.Println("Você não está em um jogo.")
 				continue
 			}
+			estado, err := obterEstadoMQTT(client, jogadorId, codigoJogo)
+			if err != nil {
+				fmt.Println("Erro ao obter estado do jogo:", err)
+				continue
+			}
+			if estado.JogadorDaVez != jogadorId {
+				fmt.Printf("Aguarde sua vez! Agora é a vez de: %s\n", estado.JogadorDaVez)
+				continue
+			}
 			fmt.Print("Digite a letra: ")
 			letra, _ := reader.ReadString('\n')
 			letra = strings.TrimSpace(letra)
@@ -569,6 +578,15 @@ func main() {
 		case "5":
 			if !emJogo {
 				fmt.Println("Você não está em um jogo.")
+				continue
+			}
+			estado, err := obterEstadoMQTT(client, jogadorId, codigoJogo)
+			if err != nil {
+				fmt.Println("Erro ao obter estado do jogo:", err)
+				continue
+			}
+			if estado.JogadorDaVez != jogadorId {
+				fmt.Printf("Aguarde sua vez! Agora é a vez de: %s\n", estado.JogadorDaVez)
 				continue
 			}
 			fmt.Print("Digite a palavra: ")

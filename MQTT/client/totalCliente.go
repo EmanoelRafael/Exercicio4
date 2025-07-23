@@ -89,74 +89,80 @@ type AtualizacaoResponse struct {
 	VencedorId     string   `json:"vencedor_id"`
 }
 
-func desenharBoneco(erros int) {
-	bonecos := []string{
-		`
-  +---+
-  |   |
-      |
-      |
-      |
-      |
-=========`,
-		`
-  +---+
-  |   |
-  O   |
-      |
-      |
-      |
-=========`,
-		`
-  +---+
-  |   |
-  O   |
-  |   |
-      |
-      |
-=========`,
-		`
-  +---+
-  |   |
-  O   |
- /|   |
-      |
-      |
-=========`,
-		`
-  +---+
-  |   |
-  O   |
- /|\  |
-      |
-      |
-=========`,
-		`
-  +---+
-  |   |
-  O   |
- /|\  |
- /    |
-      |
-=========`,
-		`
-  +---+
-  |   |
-  O   |
- /|\  |
- / \  |
-      |
-=========`,
+func desenharForca(parte int) string {
+	if parte < 0 || parte > 6 {
+		return "Número inválido. Use um valor entre 0 e 6."
 	}
 
-	if erros < 0 {
-		erros = 0
-	} else if erros > 6 {
-		erros = 6
+	forcas := []string{
+		`
+  _______
+ |/      |
+ |
+ |
+ |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |
+ |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |       |
+ |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |      \|
+ |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |      \|/
+ |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |      \|/
+ |       |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |      \|/
+ |       |
+ |      / \
+_|___
+`,
 	}
 
-	fmt.Println(bonecos[erros])
+	return forcas[parte]
 }
+
 
 func printLinhaGame(msg string, placeholder rune) {
 	size := widthGame - 2
@@ -228,7 +234,7 @@ func printGame() string {
 			printLinhaGame(strings.Join(jogo.LetrasErradas, ", "), ' ')
 		}
 		printLinhaGame(" ", ' ')
-		desenharBoneco(jogo.Erros)
+		desenharForca(jogo.Erros)
 		printLinhaGame(" ", ' ')
 
 		if jogadorId == jogo.JogadorDaVez {
@@ -264,7 +270,7 @@ func printGame() string {
 		} else {
 			printLinhaGame("", ' ')
 			printLinhaGame("VOCE PERDEU!", ' ')
-			desenharBoneco(jogo.Erros)
+			desenharForca(jogo.Erros)
 		}
 		printLinhaGame("", ' ')
 		printLinhaGame("", '-')

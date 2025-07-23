@@ -567,6 +567,14 @@ func main() {
 				fmt.Println("Erro ao obter estado do jogo:", err)
 				continue
 			}
+			if estado.JogoStatus == FINALIZADO {
+				fmt.Println("\n--- FIM DE JOGO ---")
+				fmt.Println(estado.Mensagem)
+				fmt.Println("Palavra correta:", estado.PalavraVisivel)
+				fmt.Println("Vencedor:", estado.VencedorId)
+				emJogo = false
+				continue
+			}
 			if estado.JogadorDaVez != jogadorId {
 				fmt.Printf("Aguarde sua vez! Agora é a vez de: %s\n", estado.JogadorDaVez)
 				continue
@@ -579,6 +587,13 @@ func main() {
 				fmt.Println("Erro ao palpitar letra:", err)
 			} else {
 				fmt.Println(resp.Mensagem)
+				if resp.JogoStatus == FINALIZADO {
+					fmt.Println("\n--- FIM DE JOGO ---")
+					fmt.Println(resp.Mensagem)
+					fmt.Println("Palavra correta:", resp.PalavraVisivel)
+					fmt.Println("Vencedor:", resp.VencedorId)
+					emJogo = false
+				}
 			}
 		case "5":
 			if !emJogo {
@@ -588,6 +603,14 @@ func main() {
 			estado, err := obterEstadoMQTT(client, jogadorId, codigoJogo)
 			if err != nil {
 				fmt.Println("Erro ao obter estado do jogo:", err)
+				continue
+			}
+			if estado.JogoStatus == FINALIZADO {
+				fmt.Println("\n--- FIM DE JOGO ---")
+				fmt.Println(estado.Mensagem)
+				fmt.Println("Palavra correta:", estado.PalavraVisivel)
+				fmt.Println("Vencedor:", estado.VencedorId)
+				emJogo = false
 				continue
 			}
 			if estado.JogadorDaVez != jogadorId {
@@ -602,6 +625,13 @@ func main() {
 				fmt.Println("Erro ao palpitar palavra:", err)
 			} else {
 				fmt.Println(resp.Mensagem)
+				if resp.JogoStatus == FINALIZADO {
+					fmt.Println("\n--- FIM DE JOGO ---")
+					fmt.Println(resp.Mensagem)
+					fmt.Println("Palavra correta:", resp.PalavraVisivel)
+					fmt.Println("Vencedor:", resp.VencedorId)
+					emJogo = false
+				}
 			}
 		case "6":
 			if !emJogo {

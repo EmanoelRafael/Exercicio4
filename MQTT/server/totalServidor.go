@@ -159,6 +159,29 @@ func letrasErradasSlice(m map[string]bool) []string {
 	return letras
 }
 
+func notificarFimDeJogo(client mqtt.Client, jogo *Jogo, mensagem string) {
+	for _, jogador := range jogo.Jogadores {
+		resp := AtualizacaoResponse{
+			Mensagem:       mensagem,
+			PalavraVisivel: string(jogo.PalavraVisivel),
+			ErrosJogador:   jogo.Erros[jogador],
+			LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
+			JogadorDaVez:   jogo.JogadorDaVez,
+			JogoStatus:     jogo.Status,
+			VencedorId:     jogo.VencedorID,
+		}
+		topicRespLetra := fmt.Sprintf("forca/resp/palpitar_letra/%s", jogador)
+		client.Publish(topicRespLetra, 0, false, mustJson(resp))
+		topicRespPalavra := fmt.Sprintf("forca/resp/palpitar_palavra/%s", jogador)
+		client.Publish(topicRespPalavra, 0, false, mustJson(resp))
+	}
+}
+
+func mustJson(v interface{}) []byte {
+	b, _ := json.Marshal(v)
+	return b
+}
+
 // Handler MQTT para criar jogo
 func criarJogoHandler(client mqtt.Client, msg mqtt.Message) {
 	var req CriarJogoRequest
@@ -382,7 +405,12 @@ func palpitarLetraHandler(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	// Troca turno se não venceu
-	if !palavraCompleta(jogo.PalavraVisivel) {
+	if palavraCompleta(jogo.PalavraVisivel) {
+		jogo.VencedorID = req.JogadorId
+		jogo.Status = FINALIZADO
+		notificarFimDeJogo(client, jogo, "FIM DE JOGO! Vencedor: "+req.JogadorId)
+		return
+	} else {
 		trocarTurno(jogo)
 	}
 
@@ -439,7 +467,8 @@ func palpitarPalavraHandler(client mqtt.Client, msg mqtt.Message) {
 		}
 		jogo.VencedorID = req.JogadorId
 		jogo.Status = FINALIZADO
-		resultado = "Parabéns! Você acertou a palavra e venceu o jogo."
+		notificarFimDeJogo(client, jogo, "FIM DE JOGO! Vencedor: "+req.JogadorId)
+		return
 	} else {
 		jogo.Eliminados[req.JogadorId] = true
 		// Verifica se restou apenas um jogador
@@ -447,7 +476,8 @@ func palpitarPalavraHandler(client mqtt.Client, msg mqtt.Message) {
 		if len(restantes) == 1 {
 			jogo.VencedorID = restantes[0]
 			jogo.Status = FINALIZADO
-			resultado = "Você errou e foi eliminado. O outro jogador venceu!"
+			notificarFimDeJogo(client, jogo, "FIM DE JOGO! Vencedor: "+restantes[0])
+			return
 		} else {
 			trocarTurno(jogo)
 		}

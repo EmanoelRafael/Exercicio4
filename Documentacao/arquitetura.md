@@ -1,7 +1,7 @@
 # Jogo da Forca
 
 ### Regras do jogo:
-A ordem dos jogadores é definida aleatóriamente
+A ordem dos jogadores é pela ordem de entrada na sala
 Na sua vez o jogador pode:
 1. Dar um palpite sobre uma letra
     - Caso a palavra contenha a letra a posição da letra na palavra é revelada.

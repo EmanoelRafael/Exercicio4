@@ -18,7 +18,6 @@ type Jogo struct {
 	PalavraVisivel []rune
 	Jogadores      []string
 	Erros          map[string]int
-	DicasUsadas    map[string]bool
 	LetrasErradas  map[string]bool
 	JogadorDaVez   string
 	VencedorID     string
@@ -214,7 +213,6 @@ func criarJogoHandler(client mqtt.Client, msg mqtt.Message) {
 		Jogadores:      []string{strings.ToLower(strings.TrimSpace(req.JogadorId))},
 		JogadorDaVez:   strings.ToLower(strings.TrimSpace(req.JogadorId)),
 		Erros:          map[string]int{strings.ToLower(strings.TrimSpace(req.JogadorId)): 0},
-		DicasUsadas:    map[string]bool{strings.ToLower(strings.TrimSpace(req.JogadorId)): false},
 		LetrasErradas:  make(map[string]bool),
 		Eliminados:     make(map[string]bool),
 		Status:         EM_CURSO,
@@ -304,7 +302,6 @@ func entrarJogoHandler(client mqtt.Client, msg mqtt.Message) {
 
 	jogo.Jogadores = append(jogo.Jogadores, strings.ToLower(strings.TrimSpace(req.JogadorId)))
 	jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))] = 0
-	jogo.DicasUsadas[strings.ToLower(strings.TrimSpace(req.JogadorId))] = false
 
 	// Alterar status para EM_CURSO quando houver pelo menos 2 jogadores
 	if len(jogo.Jogadores) >= 2 && jogo.Status == PENDENTE_JOGADORES {

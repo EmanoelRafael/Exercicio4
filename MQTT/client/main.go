@@ -16,7 +16,6 @@ type Jogo struct {
 	Codigo         string
 	PalavraVisivel []rune
 	Erros          int
-	DicaUsada      bool
 	LetrasErradas  []string
 	JogadorDaVez   string
 	VencedorId     string // padronizado para I minúsculo
@@ -67,11 +66,6 @@ type PalpitarPalavraRequest struct {
 	JogadorId  string `json:"jogador_id"`
 	CodigoJogo string `json:"codigo_jogo"`
 	Palavra    string `json:"palavra"`
-}
-
-type DicaRequest struct {
-	JogadorId  string `json:"jogador_id"`
-	CodigoJogo string `json:"codigo_jogo"`
 }
 
 type EstadoRequest struct {
@@ -240,7 +234,6 @@ func printGame() string {
 		if jogadorId == jogo.JogadorDaVez {
 			printLinhaGame("1 - CHUTAR LETRA", ' ')
 			printLinhaGame("2 - CHUTAR PALAVRA", ' ')
-			printLinhaGame("3 - PEDIR DICA", ' ')
 		} else {
 			printLinhaGame(" ", ' ')
 			printLinhaGame(" ", ' ')
@@ -389,31 +382,6 @@ func palpitarPalavraMQTT(client mqtt.Client, jogadorId, codigoJogo, palavra stri
 		}
 	})
 	client.Publish("forca/palpitar_palavra", 0, false, payload)
-	select {
-	case resp := <-respChan:
-		client.Unsubscribe(topicResp)
-		return resp, nil
-	case <-time.After(5 * time.Second):
-		client.Unsubscribe(topicResp)
-		return nil, fmt.Errorf("timeout ao aguardar resposta do servidor")
-	}
-}
-
-func pedirDicaMQTT(client mqtt.Client, jogadorId, codigoJogo string) (*AtualizacaoResponse, error) {
-	req := DicaRequest{
-		JogadorId:  jogadorId,
-		CodigoJogo: codigoJogo,
-	}
-	payload, _ := json.Marshal(req)
-	respChan := make(chan *AtualizacaoResponse)
-	topicResp := fmt.Sprintf("forca/resp/pedir_dica/%s", jogadorId)
-	client.Subscribe(topicResp, 0, func(_ mqtt.Client, msg mqtt.Message) {
-		var resp AtualizacaoResponse
-		if err := json.Unmarshal(msg.Payload(), &resp); err == nil {
-			respChan <- &resp
-		}
-	})
-	client.Publish("forca/pedir_dica", 0, false, payload)
 	select {
 	case resp := <-respChan:
 		client.Unsubscribe(topicResp)

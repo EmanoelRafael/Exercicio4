@@ -272,7 +272,6 @@ func printGame() string {
 	return ret
 }
 
-// Função para criar jogo via MQTT
 func criarJogoMQTT(client mqtt.Client, jogadorId string, solo bool, comAmigos bool) (*CriarJogoResponse, error) {
 	// Monta o request
 	req := CriarJogoRequest{

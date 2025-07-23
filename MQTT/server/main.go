@@ -73,7 +73,6 @@ type AtualizacaoResponse struct {
 	JogadorDaVez   string   `json:"jogador_da_vez"`
 	JogoStatus     int      `json:"jogo_status"`
 	VencedorId     string   `json:"vencedor_id"`
-	DesenhoForca   string   `json:"desenho_forca"`
 }
 
 type PalpitarLetraRequest struct {
@@ -172,7 +171,6 @@ func notificarFimDeJogo(client mqtt.Client, jogo *Jogo, mensagem string) {
 			JogadorDaVez:   jogo.JogadorDaVez,
 			JogoStatus:     jogo.Status,
 			VencedorId:     jogo.VencedorID,
-			DesenhoForca:   desenharForca(jogo.Erros[jogador]),
 		}
 		topicRespLetra := fmt.Sprintf("forca/resp/palpitar_letra/%s", jogador)
 		client.Publish(topicRespLetra, 0, false, mustJson(resp))
@@ -186,7 +184,6 @@ func mustJson(v interface{}) []byte {
 	return b
 }
 
-// Handler MQTT para criar jogo
 func criarJogoHandler(client mqtt.Client, msg mqtt.Message) {
 	var req CriarJogoRequest
 	err := json.Unmarshal(msg.Payload(), &req)
@@ -230,7 +227,6 @@ func criarJogoHandler(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	jogosManager.jogos[codigo] = jogo
-	// (Opcional) go monitorarTimeout(codigo)
 
 	resp := CriarJogoResponse{
 		CodigoJogo: codigo,
@@ -341,7 +337,6 @@ func obterEstadoHandler(client mqtt.Client, msg mqtt.Message) {
 		VencedorId:     jogo.VencedorID,
 		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
 		ErrosJogador:   jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))],
-		DesenhoForca:   desenharForca(jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))]),
 	}
 	respBytes, _ := json.Marshal(resp)
 	topicResp := fmt.Sprintf("forca/resp/obter_estado/%s", req.JogadorId)
@@ -370,7 +365,6 @@ func palpitarLetraHandler(client mqtt.Client, msg mqtt.Message) {
 			PalavraVisivel: string(jogo.PalavraVisivel),
 			JogoStatus:     jogo.Status,
 			JogadorDaVez:   jogo.JogadorDaVez,
-			DesenhoForca:   desenharForca(jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))]),
 		}
 		respBytes, _ := json.Marshal(resp)
 		topicResp := fmt.Sprintf("forca/resp/palpitar_letra/%s", req.JogadorId)
@@ -385,7 +379,6 @@ func palpitarLetraHandler(client mqtt.Client, msg mqtt.Message) {
 			PalavraVisivel: string(jogo.PalavraVisivel),
 			JogoStatus:     jogo.Status,
 			JogadorDaVez:   jogo.JogadorDaVez,
-			DesenhoForca:   desenharForca(jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))]),
 		}
 		respBytes, _ := json.Marshal(resp)
 		topicResp := fmt.Sprintf("forca/resp/palpitar_letra/%s", req.JogadorId)
@@ -442,7 +435,6 @@ func palpitarLetraHandler(client mqtt.Client, msg mqtt.Message) {
 		JogadorDaVez:   jogo.JogadorDaVez,
 		JogoStatus:     jogo.Status,
 		VencedorId:     jogo.VencedorID,
-		DesenhoForca:   desenharForca(jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))]),
 	}
 	respBytes, _ := json.Marshal(resp)
 	topicResp := fmt.Sprintf("forca/resp/palpitar_letra/%s", req.JogadorId)
@@ -517,80 +509,6 @@ func palpitarPalavraHandler(client mqtt.Client, msg mqtt.Message) {
 	respBytes, _ := json.Marshal(resp)
 	topicResp := fmt.Sprintf("forca/resp/palpitar_palavra/%s", req.JogadorId)
 	client.Publish(topicResp, 0, false, respBytes)
-}
-
-// Função para desenhar a forca
-func desenharForca(parte int) string {
-	if parte < 0 || parte > 5 {
-		parte = 5
-	}
-	forcas := []string{
-		`
-  _______
- |/      |
- |
- |
- |
- |
-_|___
-`,
-		`
-  _______
- |/      |
- |      (_)
- |
- |
- |
-_|___
-`,
-		`
-  _______
- |/      |
- |      (_)
- |       |
- |
- |
-_|___
-`,
-		`
-  _______
- |/      |
- |      (_)
- |      \|
- |
- |
-_|___
-`,
-		`
-  _______
- |/      |
- |      (_)
- |      \|/
- |
- |
-_|___
-`,
-		`
-  _______
- |/      |
- |      (_)
- |      \|/
- |       |
- |
-_|___
-`,
-		`
-  _______
- |/      |
- |      (_)
- |      \|/
- |       |
- |      / \
-_|___
-`,
-	}
-
-	return forcas[parte]
 }
 
 func main() {

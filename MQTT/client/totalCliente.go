@@ -163,7 +163,6 @@ _|___
 	return forcas[parte]
 }
 
-
 func printLinhaGame(msg string, placeholder rune) {
 	size := widthGame - 2
 	freeSpace := size - len(msg)

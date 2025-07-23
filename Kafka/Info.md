@@ -1,1 +1,0 @@
-## Versão do jogo implementada utilizando o Kafka como middleware de mesageria

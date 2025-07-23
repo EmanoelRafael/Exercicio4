@@ -18,7 +18,6 @@ type Jogo struct {
 	PalavraVisivel []rune
 	Jogadores      []string
 	Erros          map[string]int
-	DicasUsadas    map[string]bool
 	LetrasErradas  map[string]bool
 	JogadorDaVez   string
 	VencedorID     string
@@ -33,16 +32,13 @@ const PENDENTE_JOGADORES = 1
 const EM_CURSO = 2
 const FINALIZADO = 3
 
+// Adicionar constante para máximo de erros
+const MAX_ERROS = 7
+
 var IDX_PALAVRA = 0
 var palavras = []string{"Desasnado", "Filantropo", "Idiossincrasia", "Juvenilizante", "Odiento", "Quimera", "Verossimilhança", "Xaropear", "Yanomami", "Vicissitude"}
 
 // Structs para request/response via MQTT (JSON)
-type PalpitarPalavraRequest struct {
-	JogadorId  string `json:"jogador_id"`
-	CodigoJogo string `json:"codigo_jogo"`
-	Palavra    string `json:"palavra"`
-}
-
 type CriarJogoRequest struct {
 	JogadorId string `json:"jogador_id"`
 	Solo      bool   `json:"solo"`
@@ -77,6 +73,7 @@ type AtualizacaoResponse struct {
 	JogadorDaVez   string   `json:"jogador_da_vez"`
 	JogoStatus     int      `json:"jogo_status"`
 	VencedorId     string   `json:"vencedor_id"`
+	DesenhoForca   string   `json:"desenho_forca"`
 }
 
 type PalpitarLetraRequest struct {
@@ -85,9 +82,10 @@ type PalpitarLetraRequest struct {
 	Letra      string `json:"letra"`
 }
 
-type DicaRequest struct {
+type PalpitarPalavraRequest struct {
 	JogadorId  string `json:"jogador_id"`
 	CodigoJogo string `json:"codigo_jogo"`
+	Palavra    string `json:"palavra"`
 }
 
 // Mapa global de jogos e mutex
@@ -164,6 +162,30 @@ func letrasErradasSlice(m map[string]bool) []string {
 	return letras
 }
 
+func notificarFimDeJogo(client mqtt.Client, jogo *Jogo, mensagem string) {
+	for _, jogador := range jogo.Jogadores {
+		resp := AtualizacaoResponse{
+			Mensagem:       mensagem,
+			PalavraVisivel: string(jogo.PalavraVisivel),
+			ErrosJogador:   jogo.Erros[jogador],
+			LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
+			JogadorDaVez:   jogo.JogadorDaVez,
+			JogoStatus:     jogo.Status,
+			VencedorId:     jogo.VencedorID,
+			DesenhoForca:   desenharForca(jogo.Erros[jogador]),
+		}
+		topicRespLetra := fmt.Sprintf("forca/resp/palpitar_letra/%s", jogador)
+		client.Publish(topicRespLetra, 0, false, mustJson(resp))
+		topicRespPalavra := fmt.Sprintf("forca/resp/palpitar_palavra/%s", jogador)
+		client.Publish(topicRespPalavra, 0, false, mustJson(resp))
+	}
+}
+
+func mustJson(v interface{}) []byte {
+	b, _ := json.Marshal(v)
+	return b
+}
+
 // Handler MQTT para criar jogo
 func criarJogoHandler(client mqtt.Client, msg mqtt.Message) {
 	var req CriarJogoRequest
@@ -188,10 +210,9 @@ func criarJogoHandler(client mqtt.Client, msg mqtt.Message) {
 		Codigo:         codigo,
 		Palavra:        palavra,
 		PalavraVisivel: visivel,
-		Jogadores:      []string{req.JogadorId},
-		JogadorDaVez:   req.JogadorId,
-		Erros:          map[string]int{req.JogadorId: 0},
-		DicasUsadas:    map[string]bool{req.JogadorId: false},
+		Jogadores:      []string{strings.ToLower(strings.TrimSpace(req.JogadorId))},
+		JogadorDaVez:   strings.ToLower(strings.TrimSpace(req.JogadorId)),
+		Erros:          map[string]int{strings.ToLower(strings.TrimSpace(req.JogadorId)): 0},
 		LetrasErradas:  make(map[string]bool),
 		Eliminados:     make(map[string]bool),
 		Status:         EM_CURSO,
@@ -256,7 +277,7 @@ func entrarJogoHandler(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	for _, j := range jogo.Jogadores {
-		if j == req.JogadorId {
+		if j == strings.ToLower(strings.TrimSpace(req.JogadorId)) {
 			resp := EntrarJogoResponse{
 				Mensagem: "Você já está participando deste jogo",
 				Sucesso:  true,
@@ -270,7 +291,7 @@ func entrarJogoHandler(client mqtt.Client, msg mqtt.Message) {
 
 	if len(jogo.Jogadores) >= 2 {
 		resp := EntrarJogoResponse{
-			Mensagem: "O jogo já possui quatro jogadores",
+			Mensagem: "O jogo já possui 2 jogadores",
 			Sucesso:  false,
 		}
 		respBytes, _ := json.Marshal(resp)
@@ -279,9 +300,8 @@ func entrarJogoHandler(client mqtt.Client, msg mqtt.Message) {
 		return
 	}
 
-	jogo.Jogadores = append(jogo.Jogadores, req.JogadorId)
-	jogo.Erros[req.JogadorId] = 0
-	jogo.DicasUsadas[req.JogadorId] = false
+	jogo.Jogadores = append(jogo.Jogadores, strings.ToLower(strings.TrimSpace(req.JogadorId)))
+	jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))] = 0
 
 	// Alterar status para EM_CURSO quando houver pelo menos 2 jogadores
 	if len(jogo.Jogadores) >= 2 && jogo.Status == PENDENTE_JOGADORES {
@@ -320,163 +340,11 @@ func obterEstadoHandler(client mqtt.Client, msg mqtt.Message) {
 		JogoStatus:     jogo.Status,
 		VencedorId:     jogo.VencedorID,
 		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
-		ErrosJogador:   jogo.Erros[req.JogadorId],
+		ErrosJogador:   jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))],
+		DesenhoForca:   desenharForca(jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))]),
 	}
 	respBytes, _ := json.Marshal(resp)
 	topicResp := fmt.Sprintf("forca/resp/obter_estado/%s", req.JogadorId)
-	client.Publish(topicResp, 0, false, respBytes)
-}
-func palpitarPalavraHandler(client mqtt.Client, msg mqtt.Message) {
-	var req PalpitarPalavraRequest
-	err := json.Unmarshal(msg.Payload(), &req)
-	if err != nil {
-		log.Println("Erro ao decodificar PalpitarPalavraRequest:", err)
-		return
-	}
-
-	jogosManager.mu.Lock()
-	defer jogosManager.mu.Unlock()
-
-	jogo, existe := jogosManager.jogos[req.CodigoJogo]
-	if !existe || jogo.Status == FINALIZADO {
-		return
-	}
-
-	// Verifica se é a vez do jogador
-	if jogo.JogadorDaVez != req.JogadorId {
-		resp := AtualizacaoResponse{
-			Mensagem:       "Não é sua vez",
-			PalavraVisivel: string(jogo.PalavraVisivel),
-			JogoStatus:     jogo.Status,
-			JogadorDaVez:   jogo.JogadorDaVez,
-		}
-		respBytes, _ := json.Marshal(resp)
-		topicResp := fmt.Sprintf("forca/resp/palpitar_palavra/%s", req.JogadorId)
-		client.Publish(topicResp, 0, false, respBytes)
-		return
-	}
-
-	// Compara com a palavra correta
-	palpite := strings.ToUpper(req.Palavra)
-	resposta := strings.ToUpper(jogo.Palavra)
-
-	var mensagem string
-
-	if palpite == resposta {
-		jogo.PalavraVisivel = []rune(jogo.Palavra)
-		jogo.VencedorID = req.JogadorId
-		jogo.Status = FINALIZADO
-		mensagem = "Parabéns! Você acertou a palavra e venceu o jogo."
-	} else {
-		jogo.Erros[req.JogadorId]++
-		jogo.LetrasErradas[palpite] = true
-
-		if jogo.Erros[req.JogadorId] >= 6 {
-			jogo.Eliminados[req.JogadorId] = true
-			mensagem = "Palpite incorreto. Você atingiu o limite de erros e foi eliminado!"
-		} else {
-			mensagem = fmt.Sprintf("Palpite incorreto. Restam %d tentativas.", 6-jogo.Erros[req.JogadorId])
-			trocarTurno(jogo)
-		}
-	}
-
-	resp := AtualizacaoResponse{
-		Mensagem:       mensagem,
-		PalavraVisivel: string(jogo.PalavraVisivel),
-		ErrosJogador:   jogo.Erros[req.JogadorId],
-		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
-		JogadorDaVez:   jogo.JogadorDaVez,
-		JogoStatus:     jogo.Status,
-		VencedorId:     jogo.VencedorID,
-	}
-
-	respBytes, _ := json.Marshal(resp)
-	topicResp := fmt.Sprintf("forca/resp/palpitar_palavra/%s", req.JogadorId)
-	client.Publish(topicResp, 0, false, respBytes)
-}
-
-
-func pedirDicaHandler(client mqtt.Client, msg mqtt.Message) {
-	var req DicaRequest
-	err := json.Unmarshal(msg.Payload(), &req)
-	if err != nil {
-		log.Println("Erro ao decodificar DicaRequest:", err)
-		return
-	}
-
-	jogosManager.mu.Lock()
-	defer jogosManager.mu.Unlock()
-
-	jogo, existe := jogosManager.jogos[req.CodigoJogo]
-	if !existe || jogo.Status == FINALIZADO {
-		return
-	}
-
-	if jogo.JogadorDaVez != req.JogadorId {
-		resp := AtualizacaoResponse{
-			Mensagem:       "Não é sua vez",
-			PalavraVisivel: string(jogo.PalavraVisivel),
-			JogoStatus:     jogo.Status,
-			JogadorDaVez:   jogo.JogadorDaVez,
-		}
-		respBytes, _ := json.Marshal(resp)
-		topicResp := fmt.Sprintf("forca/resp/pedir_dica/%s", req.JogadorId)
-		client.Publish(topicResp, 0, false, respBytes)
-		return
-	}
-
-	if jogo.DicasUsadas[req.JogadorId] {
-		resp := AtualizacaoResponse{
-			Mensagem:       "Você já usou sua dica!",
-			PalavraVisivel: string(jogo.PalavraVisivel),
-			JogoStatus:     jogo.Status,
-			JogadorDaVez:   jogo.JogadorDaVez,
-		}
-		respBytes, _ := json.Marshal(resp)
-		topicResp := fmt.Sprintf("forca/resp/pedir_dica/%s", req.JogadorId)
-		client.Publish(topicResp, 0, false, respBytes)
-		return
-	}
-
-	// Encontra letras ainda ocultas
-	var posicoesOcultas []int
-	for i, r := range jogo.PalavraVisivel {
-		if r == '_' {
-			posicoesOcultas = append(posicoesOcultas, i)
-		}
-	}
-
-	if len(posicoesOcultas) == 0 {
-		resp := AtualizacaoResponse{
-			Mensagem:       "Todas as letras já foram reveladas!",
-			PalavraVisivel: string(jogo.PalavraVisivel),
-			JogadorDaVez:   jogo.JogadorDaVez,
-			JogoStatus:     jogo.Status,
-		}
-		respBytes, _ := json.Marshal(resp)
-		topicResp := fmt.Sprintf("forca/resp/pedir_dica/%s", req.JogadorId)
-		client.Publish(topicResp, 0, false, respBytes)
-		return
-	}
-
-	// Escolhe uma posição oculta aleatoriamente e revela
-	rand.Seed(time.Now().UnixNano())
-	idx := posicoesOcultas[rand.Intn(len(posicoesOcultas))]
-	letra := rune(jogo.Palavra[idx])
-	jogo.PalavraVisivel[idx] = letra
-	jogo.DicasUsadas[req.JogadorId] = true
-
-	resp := AtualizacaoResponse{
-		Mensagem:       fmt.Sprintf("Dica usada! A letra '%c' foi revelada.", letra),
-		PalavraVisivel: string(jogo.PalavraVisivel),
-		ErrosJogador:   jogo.Erros[req.JogadorId],
-		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
-		JogadorDaVez:   jogo.JogadorDaVez, // Mantém a vez
-		JogoStatus:     jogo.Status,
-		VencedorId:     jogo.VencedorID,
-	}
-	respBytes, _ := json.Marshal(resp)
-	topicResp := fmt.Sprintf("forca/resp/pedir_dica/%s", req.JogadorId)
 	client.Publish(topicResp, 0, false, respBytes)
 }
 
@@ -496,12 +364,13 @@ func palpitarLetraHandler(client mqtt.Client, msg mqtt.Message) {
 		return
 	}
 
-	if jogo.JogadorDaVez != req.JogadorId {
+	if jogo.JogadorDaVez != strings.ToLower(strings.TrimSpace(req.JogadorId)) {
 		resp := AtualizacaoResponse{
 			Mensagem:       "Não é sua vez",
 			PalavraVisivel: string(jogo.PalavraVisivel),
 			JogoStatus:     jogo.Status,
 			JogadorDaVez:   jogo.JogadorDaVez,
+			DesenhoForca:   desenharForca(jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))]),
 		}
 		respBytes, _ := json.Marshal(resp)
 		topicResp := fmt.Sprintf("forca/resp/palpitar_letra/%s", req.JogadorId)
@@ -516,6 +385,7 @@ func palpitarLetraHandler(client mqtt.Client, msg mqtt.Message) {
 			PalavraVisivel: string(jogo.PalavraVisivel),
 			JogoStatus:     jogo.Status,
 			JogadorDaVez:   jogo.JogadorDaVez,
+			DesenhoForca:   desenharForca(jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))]),
 		}
 		respBytes, _ := json.Marshal(resp)
 		topicResp := fmt.Sprintf("forca/resp/palpitar_letra/%s", req.JogadorId)
@@ -534,27 +404,193 @@ func palpitarLetraHandler(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	if !acertou {
-		jogo.Erros[req.JogadorId]++
+		jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))]++
 		jogo.LetrasErradas[palpite] = true
-		resultado = "Letra incorreta. Restam X tentativas"
+		if jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))] >= MAX_ERROS {
+			jogo.Eliminados[strings.ToLower(strings.TrimSpace(req.JogadorId))] = true
+			// Verifica se restou apenas um jogador
+			restantes := jogadoresRestantes(jogo)
+			if len(restantes) == 1 {
+				jogo.VencedorID = restantes[0]
+				jogo.Status = FINALIZADO
+				notificarFimDeJogo(client, jogo, "FIM DE JOGO! Vencedor: "+restantes[0])
+				return
+			} else {
+				resultado = "Você errou 5 vezes e foi eliminado!"
+			}
+		} else {
+			resultado = "Letra incorreta. Restam " + fmt.Sprint(MAX_ERROS-jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))]) + " tentativas"
+		}
 	}
 
-	// Troca turno se não venceu
-	if !palavraCompleta(jogo.PalavraVisivel) {
+	if palavraCompleta(jogo.PalavraVisivel) {
+		jogo.VencedorID = strings.ToLower(strings.TrimSpace(req.JogadorId))
+		jogo.Status = FINALIZADO
+		notificarFimDeJogo(client, jogo, "FIM DE JOGO! Vencedor: "+strings.ToLower(strings.TrimSpace(req.JogadorId)))
+		return
+	} else if !acertou && jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))] >= MAX_ERROS {
+		return // já notificou acima
+	} else {
 		trocarTurno(jogo)
 	}
 
 	resp := AtualizacaoResponse{
 		Mensagem:       resultado,
 		PalavraVisivel: string(jogo.PalavraVisivel),
-		ErrosJogador:   jogo.Erros[req.JogadorId],
+		ErrosJogador:   jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))],
 		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
 		JogadorDaVez:   jogo.JogadorDaVez,
 		JogoStatus:     jogo.Status,
+		VencedorId:     jogo.VencedorID,
+		DesenhoForca:   desenharForca(jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))]),
 	}
 	respBytes, _ := json.Marshal(resp)
 	topicResp := fmt.Sprintf("forca/resp/palpitar_letra/%s", req.JogadorId)
 	client.Publish(topicResp, 0, false, respBytes)
+}
+
+func palpitarPalavraHandler(client mqtt.Client, msg mqtt.Message) {
+	var req PalpitarPalavraRequest
+	err := json.Unmarshal(msg.Payload(), &req)
+	if err != nil {
+		log.Println("Erro ao decodificar PalpitarPalavraRequest:", err)
+		return
+	}
+
+	jogosManager.mu.Lock()
+	defer jogosManager.mu.Unlock()
+
+	jogo, existe := jogosManager.jogos[req.CodigoJogo]
+	if !existe || jogo.Status == FINALIZADO {
+		return
+	}
+
+	if jogo.JogadorDaVez != strings.ToLower(strings.TrimSpace(req.JogadorId)) {
+		resp := AtualizacaoResponse{
+			Mensagem:       "Não é sua vez",
+			PalavraVisivel: string(jogo.PalavraVisivel),
+			JogoStatus:     jogo.Status,
+			JogadorDaVez:   jogo.JogadorDaVez,
+		}
+		respBytes, _ := json.Marshal(resp)
+		topicResp := fmt.Sprintf("forca/resp/palpitar_palavra/%s", req.JogadorId)
+		client.Publish(topicResp, 0, false, respBytes)
+		return
+	}
+
+	palpite := strings.ToUpper(strings.TrimSpace(req.Palavra))
+	palavraCerta := strings.ToUpper(jogo.Palavra)
+	acertou := palpite == palavraCerta
+	resultado := "Palpite incorreto. Você foi eliminado."
+
+	if acertou {
+		for i, l := range jogo.Palavra {
+			jogo.PalavraVisivel[i] = l
+		}
+		jogo.VencedorID = strings.ToLower(strings.TrimSpace(req.JogadorId))
+		jogo.Status = FINALIZADO
+		notificarFimDeJogo(client, jogo, "FIM DE JOGO! Vencedor: "+strings.ToLower(strings.TrimSpace(req.JogadorId)))
+		return
+	} else {
+		jogo.Eliminados[strings.ToLower(strings.TrimSpace(req.JogadorId))] = true
+		// Verifica se restou apenas um jogador
+		restantes := jogadoresRestantes(jogo)
+		if len(restantes) == 1 {
+			jogo.VencedorID = restantes[0]
+			jogo.Status = FINALIZADO
+			notificarFimDeJogo(client, jogo, "FIM DE JOGO! Vencedor: "+restantes[0])
+			return
+		} else {
+			trocarTurno(jogo)
+		}
+	}
+
+	resp := AtualizacaoResponse{
+		Mensagem:       resultado,
+		PalavraVisivel: string(jogo.PalavraVisivel),
+		ErrosJogador:   jogo.Erros[strings.ToLower(strings.TrimSpace(req.JogadorId))],
+		LetrasErradas:  letrasErradasSlice(jogo.LetrasErradas),
+		JogadorDaVez:   jogo.JogadorDaVez,
+		JogoStatus:     jogo.Status,
+		VencedorId:     jogo.VencedorID,
+	}
+	respBytes, _ := json.Marshal(resp)
+	topicResp := fmt.Sprintf("forca/resp/palpitar_palavra/%s", req.JogadorId)
+	client.Publish(topicResp, 0, false, respBytes)
+}
+
+// Função para desenhar a forca
+func desenharForca(parte int) string {
+	if parte < 0 || parte > 5 {
+		parte = 5
+	}
+	forcas := []string{
+		`
+  _______
+ |/      |
+ |
+ |
+ |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |
+ |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |       |
+ |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |      \|
+ |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |      \|/
+ |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |      \|/
+ |       |
+ |
+_|___
+`,
+		`
+  _______
+ |/      |
+ |      (_)
+ |      \|/
+ |       |
+ |      / \
+_|___
+`,
+	}
+
+	return forcas[parte]
 }
 
 func main() {
@@ -579,8 +615,6 @@ func main() {
 	client.Subscribe("forca/obter_estado", 0, obterEstadoHandler)
 	client.Subscribe("forca/palpitar_letra", 0, palpitarLetraHandler)
 	client.Subscribe("forca/palpitar_palavra", 0, palpitarPalavraHandler)
-	client.Subscribe("forca/pedir_dica", 0, pedirDicaHandler)
-
 
 	// Mantém o servidor rodando
 	select {}
